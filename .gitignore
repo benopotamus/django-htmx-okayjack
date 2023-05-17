@@ -1,0 +1,7 @@
+?*.env
+.venv/
+.vscode/
+__pycache__/
+db.sqlite3
+offcuts/
+uploads/
