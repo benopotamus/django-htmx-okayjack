@@ -61,7 +61,7 @@ def title(request, question_id):
 This is nice because it keeps all the view declaration stuff in the HTML file.
 
 ## Installation
-Install things in the normal way.
+Install things in the usual way.
 
 1. `pip install django-render-blocks`
 
