@@ -2,20 +2,23 @@
 
 Okayjack is some Django middleware, some Django response classes, and an HTMX extension, to make HTMX forms even easier. It also uses `django-render-blocks`.
 
+![image](https://github.com/benopotamus/okayjack-htmx/assets/3161149/f293e078-989a-4539-adc6-cc43d54c8308)
+
+
 ## Overview
 ### HTMX extension
 Normal HTMX requests - with a bit of Django form error display - look something like this
 
 ```html
-	<form hx-post="/store">
+<form hx-post="/store">
+	
+	<input id="title" name="title" type="text" {% if form.title.errors %}class="error"{% endif %}>
+	{% if form.title.errors %}
+		<div class='error'>{{ form.title.errors }}</div>
+	{% endif %}
+	<button type="submit">Submit</button>
 
-		<input id="title" name="title" type="text" {% if form.title.errors %}class="error"{% endif %}>
-		{% if form.title.errors %}
-			<div class='error'>{{ form.title.errors }}</div>
-		{% endif %}
-		<button type="submit">Submit</button>
-
-	</form>
+</form>
 ```
 
 With Okayjack, you can do this.
