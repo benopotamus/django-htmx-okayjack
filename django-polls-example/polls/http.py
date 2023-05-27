@@ -11,7 +11,7 @@ class HxDoNothing(HttpResponse):
 
 
 class HxRedirect(HttpResponseRedirect):
-	'''A HttpResponse that tells htmx to do redirect to the provided URL
+	'''A HttpResponse that tells htmx to do a client side redirect to the provided URL
 	E.g. HxRedirect(reverse('home'))
 	'''
 	def __init__(self, *args, **kwargs):
@@ -29,7 +29,7 @@ class HxRefresh(HttpResponse):
 
 
 class HxTrigger(HttpResponse):
-	'''A HttpResponse for telling htmx to trigger an event - and do nothing else.
+	'''A HttpResponse that tells htmx to trigger an event - and do nothing else.
 	https://htmx.org/headers/hx-trigger/
 	
 	trigger: the name of the event to trigger. Can also be JSON string, which allows for triggering multiple events and/or passing data for the event
