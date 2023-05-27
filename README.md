@@ -147,7 +147,7 @@ The format of block is "template_path/template_name:block_name"
 
 ```BlockResponse('base/home.html:welcome_block')```
 
-### HxResponse(request[, context, block=None, swap=None, trigger=None, trigger_after_settle=None, trigger_after_swap=None)
+### HxResponse(request[, context, block=None, swap=None, trigger=None, trigger_after_settle=None, trigger_after_swap=None])
 
 Creates a TemplateResponse-like object using django-render-block and HTMX header functions. Its main purpose is to make it easy to specify - on the server side - what HTMX should do with a response.
 
@@ -155,13 +155,13 @@ Automatically gets the block name from HX-Block header, or it can be specified a
 
 ```HxResponse(request, { 'form': form, trigger='do-this-when-response-is-received'})```
 
-### HxSuccessResponse(request)
+### HxSuccessResponse(request[, context, block=None, swap=None, trigger=None, trigger_after_settle=None, trigger_after_swap=None])
 
 A convenience class for creating a 'sucess' HxResponse. The response will include any hx-success-* attributes specified in the request markup.
 
 ```HxSuccessResponse(request, { 'form': form, trigger='do-this-when-response-is-received'})```
 
-### HxErrorResponse(request)
+### HxErrorResponse(request[, context, block=None, swap=None, trigger=None, trigger_after_settle=None, trigger_after_swap=None])
 
 A convenience class for creating an 'error' HxResponse. The response will include any hx-error-* attributes specified in the request markup.
 
