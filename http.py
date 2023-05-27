@@ -60,7 +60,13 @@ class HxResponse(HttpResponse):
 
 	Uses django-render-block and the Okayjack HTMX extension."
 	'''
-	def __init__(self, request, context, *args, **kwargs):
+	def __init__(self, request, *args, **kwargs):
+
+		# Most instances will include a context, but some things like just triggering an event, or doing a refresh, doesn't need a context
+		try:
+			context = args[0]
+		except IndexError:
+			context=None
 
 		# Remove extra kwargs before passing kwargs to HttpResponse
 		swap = kwargs.pop('swap', None)
