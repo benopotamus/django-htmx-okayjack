@@ -99,19 +99,19 @@ class HxResponse(HttpResponse):
 
 		# Swap
 		if swap:
-			self['HX-Reswap'] = kwargs['swap']
+			self['HX-Reswap'] = swap
 
 		# Target
 		if target:
-			self['HX-Retarget'] = kwargs['target']
+			self['HX-Retarget'] = target
 
 		# Trigger
 		if trigger:
-			self['HX-Trigger'] = kwargs['trigger']
+			self['HX-Trigger'] = trigger
 		if trigger_after_settle:
-			self['HX-Trigger-After-Settle'] = kwargs['trigger_after_settle']
+			self['HX-Trigger-After-Settle'] = trigger_after_settle
 		if trigger_after_swap:
-			self['HX-Trigger-After-Swap'] = kwargs['trigger_after_swap']
+			self['HX-Trigger-After-Swap'] = trigger_after_swap
 
 
 # The list of HTMX attributes that HxResponse recognises, and their header equivalent (for telling HTMX to do something different when it receives the response)

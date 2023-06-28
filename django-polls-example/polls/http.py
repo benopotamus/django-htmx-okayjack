@@ -34,12 +34,14 @@ class HxTrigger(HttpResponse):
 	
 	trigger: the name of the event to trigger. Can also be JSON string, which allows for triggering multiple events and/or passing data for the event
 	'''
-	def __init__(self, trigger=None, trigger_after_swap=None, *args, **kwargs):
+	def __init__(self, trigger=None, trigger_after_swap=None, trigger_after_settle=None, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		if trigger:
 			self['HX-Trigger'] = trigger
 		if trigger_after_swap:
 			self['HX-Trigger-After-Swap'] = trigger_after_swap
+		if trigger_after_swap:
+			self['HX-Trigger-After-Settle'] = trigger_after_settle
 
 
 class BlockResponse(HttpResponse):
@@ -58,7 +60,13 @@ class HxResponse(HttpResponse):
 
 	Uses django-render-block and the Okayjack HTMX extension."
 	'''
-	def __init__(self, request, context, *args, **kwargs):
+	def __init__(self, request, *args, **kwargs):
+
+		# Most instances will include a context, but some things like just triggering an event, or doing a refresh, doesn't need a context
+		try:
+			context = args[0]
+		except IndexError:
+			context=None
 
 		# Remove extra kwargs before passing kwargs to HttpResponse
 		swap = kwargs.pop('swap', None)
@@ -91,19 +99,19 @@ class HxResponse(HttpResponse):
 
 		# Swap
 		if swap:
-			self['HX-Reswap'] = kwargs['swap']
+			self['HX-Reswap'] = swap
 
 		# Target
 		if target:
-			self['HX-Retarget'] = kwargs['target']
+			self['HX-Retarget'] = target
 
 		# Trigger
 		if trigger:
-			self['HX-Trigger'] = kwargs['trigger']
+			self['HX-Trigger'] = trigger
 		if trigger_after_settle:
-			self['HX-Trigger-After-Settle'] = kwargs['trigger_after_settle']
+			self['HX-Trigger-After-Settle'] = trigger_after_settle
 		if trigger_after_swap:
-			self['HX-Trigger-After-Swap'] = kwargs['trigger_after_swap']
+			self['HX-Trigger-After-Swap'] = trigger_after_swap
 
 
 # The list of HTMX attributes that HxResponse recognises, and their header equivalent (for telling HTMX to do something different when it receives the response)
