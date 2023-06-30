@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views import generic
 
-from .http import HxSuccessResponse, HxErrorResponse
+from okayjack.http import HxSuccessResponse, HxErrorResponse
 
 from .models import Choice, Question
 

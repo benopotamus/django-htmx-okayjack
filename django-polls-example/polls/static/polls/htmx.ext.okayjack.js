@@ -8,8 +8,11 @@
  * In the HTML markup, instead of (or in addition to) things like hx-target="..." you can now do hx-success-target="..." or hx-error-target="...".
  * 
  * It also supports a hx-block attribute, which is for use with a HxResponse Django class and django-render-block.
+ * And it supports hx-trigger-after, which htmx doesn't have in request attributes (but supports as response headers)
+ * 
+ * 30 June 2023
  */
-const attrsNames = [
+const htmxAttrsNames = [
 	'Location',
 	'Push-Url',
 	'Redirect',
@@ -17,10 +20,12 @@ const attrsNames = [
 	'Replace-Url',
 	'Swap',
 	'Target',
-	'Trigger',
+]
+const customAttrsNames = [
+	'Block',
+	'Trigger-After-Receive',
 	'Trigger-After-Settle',
 	'Trigger-After-Swap',
-	'Block'
 ]
 
 htmx.defineExtension('okayjack', {
@@ -33,11 +38,16 @@ htmx.defineExtension('okayjack', {
 					evt.detail.headers[attr] = blockEl.getAttribute(attrLower)
 				}
 			}
-			appendHxAttribute('HX-Block')
-			for (let attrName of attrsNames) {
+			// Add any success/error attributes - htmx + custom
+			for (let attrName of htmxAttrsNames.concat(customAttrsNames)) {
 				appendHxAttribute('HX-Success-'+attrName)
 				appendHxAttribute('HX-Error-'+attrName)
 			}
+			// htmx will automatically do whatever its normally attributes specify, but we need to implement our custom attribute by using response headers so we have to send those to the server as well
+			for (let attrName of customAttrsNames) {
+				appendHxAttribute('HX-'+attrName)
+			}
+			console.log(evt.detail.headers)
 		}
 	}
 })

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'render_block',
+    'okayjack',
 ]
 
 MIDDLEWARE = [
@@ -49,7 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	'polls.middleware.OkayjackMiddleware',
+	'okayjack.middleware.OkayjackMiddleware',
 ]
 
 ROOT_URLCONF = 'mysite.urls'

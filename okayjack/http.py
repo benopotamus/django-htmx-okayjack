@@ -4,6 +4,8 @@ from render_block import render_block_to_string
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 
+'''30 June 2023'''
+
 
 class HxDoNothing(HttpResponse):
 	'''A HttpResponse that tells htmx to do nothing'''
@@ -34,10 +36,10 @@ class HxTrigger(HttpResponse):
 	
 	trigger: the name of the event to trigger. Can also be JSON string, which allows for triggering multiple events and/or passing data for the event
 	'''
-	def __init__(self, trigger=None, trigger_after_swap=None, trigger_after_settle=None, *args, **kwargs):
+	def __init__(self, trigger_after_receive=None, trigger_after_swap=None, trigger_after_settle=None, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		if trigger:
-			self['HX-Trigger'] = trigger
+		if trigger_after_receive:
+			self['HX-Trigger'] = trigger_after_receive
 		if trigger_after_swap:
 			self['HX-Trigger-After-Swap'] = trigger_after_swap
 		if trigger_after_swap:
@@ -67,13 +69,24 @@ class HxResponse(HttpResponse):
 			context = args[0]
 		except IndexError:
 			context=None
-
+		
 		# Remove extra kwargs before passing kwargs to HttpResponse
 		swap = kwargs.pop('swap', None)
 		target = kwargs.pop('target', None)
-		trigger = kwargs.pop('trigger', None)
+		trigger_after_receive = kwargs.pop('trigger_after_receive', None)
 		trigger_after_settle = kwargs.pop('trigger_after_settle', None)
 		trigger_after_swap = kwargs.pop('trigger_after_swap', None)
+
+		# HxSuccessResponse and HxErrorResponse handle okayjack's custom attributes (block + triggers). We need to handle the non success/error ones here for uses where someone uses HxResponse directly.
+		# For each, don't bother if a kwargs was supplied (as it should override), otherwise, add the value if it was in the request.
+		# All other non success/error hx-? attributes htmx handles client side
+		if not trigger_after_receive and 'trigger-after-receive' in request.hx:
+			trigger_after_receive = request.hx['trigger-after-receive']
+		if not trigger_after_settle and 'trigger-after-settle' in request.hx:
+			trigger_after_settle = request.hx['trigger-after-settle']
+		if not trigger_after_swap and 'trigger-after-swap' in request.hx:
+			trigger_after_swap = request.hx['trigger-after-swap']
+
 
 		# Render HTML from context and block reference
 		html = None
@@ -106,8 +119,8 @@ class HxResponse(HttpResponse):
 			self['HX-Retarget'] = target
 
 		# Trigger
-		if trigger:
-			self['HX-Trigger'] = trigger
+		if trigger_after_receive:
+			self['HX-Trigger'] = trigger_after_receive # I had to pick a new name for this one so it doesn't conflict with hx-trigger
 		if trigger_after_settle:
 			self['HX-Trigger-After-Settle'] = trigger_after_settle
 		if trigger_after_swap:
@@ -123,7 +136,7 @@ hx_attributes = [
 	{ 'request': 'replace-url', 'response': 'HX-Replace-Url'},
 	{ 'request': 'swap', 'response': 'HX-Reswap'},
 	{ 'request': 'target', 'response': 'HX-Retarget'},
-	{ 'request': 'trigger', 'response': 'HX-Trigger'},
+	{ 'request': 'trigger-after-receive', 'response': 'HX-Trigger'},
 	{ 'request': 'trigger-after-settle', 'response': 'HX-Trigger-After-Settle'},
 	{ 'request': 'trigger-after-swap', 'response': 'HX-Trigger-After-Swap'},
 ]
