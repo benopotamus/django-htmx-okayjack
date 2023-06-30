@@ -1,12 +1,13 @@
 # Okayjack (Django+htmx)
 
-Okayjack (+`django-render-blocks`) extends Django and htmx a smidge so they are even more pleasant to use! 🥳
+Okayjack (+`django-render-blocks`) extends Django and htmx a smidge so they are even _more_ pleasant to use! 🥳
 
-1. Extends htmx by moving all htmx logic to the request markup by default
-	a. Which template or DTL block to use for a response
-	a. How to handle a successful (valid) form submission vs an errorenous (invalid) ones 
-	a. Triggering an action after a response is received
-1. Extends Django's REST verbs support (adds a body to PATCH etc)
+1. **Extends htmx** by moving all htmx logic to the request markup by default
+    1. Which template or DTL block to use for a response
+    1. How to handle a successful (valid) form submission vs an errorenous (invalid) ones
+    1. Triggering an action after a response is received
+
+1. **Extends Django's** REST verbs support (adds a body to PATCH etc)
 
 Codewise, Okayjack is:
 1. Some Django middleware
@@ -32,7 +33,7 @@ Normal htmx requests - with a bit of Django form error display - look something 
 </form>
 ```
 
-With Okayjack, you can do this.
+With Okayjack, you can do this. 
 ```html
 {% block title_form %}
 	<form 
@@ -58,8 +59,10 @@ With Okayjack, you can do this.
 </template>
 ```
 
+This example shows the blocks in the same file as the requesting html. The blocks can actually be in any file however.
+
 ### Django middleware and response classes
-Given the above HTML, in the corresponding Django view we now only have to do the following to handle both success and error variations.
+Given the above HTML, in the corresponding Django view, we now only have to do the following to handle both success and error variations.
 ```python
 def title(request, question_id):
 	form = TitleForm(request.POST)
@@ -71,7 +74,6 @@ def title(request, question_id):
 
 
 ## Installation
-Install things in the usual way.
 
 1. `pip install django-render-blocks`
 
@@ -92,7 +94,7 @@ MIDDLEWARE = [
 ]
 ```
 
-3. Import the `okayjack.http` in your `views.py` to use the `HttpResponse-like` classes
+3. Import `okayjack.http` in your `views.py` to use the `HttpResponse-like` classes
 
 4. Load htmx extension <https://htmx.org/attributes/hx-ext/> in template
 
@@ -105,8 +107,8 @@ Supports all htmx response headers https://htmx.org/reference/#response_headers.
 
 You can use a combination of:
 * Regular `hx-*` attributes. E.g. `hx-target="..."`
-* Regular `hx-success-*` attributes - used when Django returned a `HxSuccessResponse`. E.g. `hx-success-target="..."`
-* Regular `hx-error-*` attributes - used when Django returned a `HxErrorResponse`. E.g. `hx-error-target="..."`
+* Regular `hx-success-*` attributes - used when Django returns a `HxSuccessResponse`. E.g. `hx-success-target="..."`
+* Regular `hx-error-*` attributes - used when Django returns a `HxErrorResponse`. E.g. `hx-error-target="..."`
 
 htmx will use the values of `hx-*` unless there is a `hx-success-*` or `hx-error-*` value (for a success or error response respectively).
 
@@ -126,7 +128,7 @@ The `*` in `hx-success-*` and `hx-error-*` attributes can be any of the followin
 
 `trigger-after-receive` isn't a normal htmx attribute. It sets the `HX-Trigger` response header. It had to be renamed so it doesn't conflict with `hx-trigger` for triggering the request itself 🤷
 
-`bock` is the path to a template and optional template block to use when generating the HTML response. E.g.
+`block` is the path to a template and optional template block to use when generating the HTML response. E.g.
 
 ```hx-block="base/home.html:welcome_block"``` or ```hx-success-block="base/home.html:new_item"```
 
