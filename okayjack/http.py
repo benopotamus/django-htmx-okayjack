@@ -4,7 +4,7 @@ from render_block import render_block_to_string
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 
-'''30 June 2023'''
+'''6 Aug 2023'''
 
 
 class HxDoNothing(HttpResponse):
@@ -48,10 +48,10 @@ class HxTrigger(HttpResponse):
 
 class BlockResponse(HttpResponse):
 	'''Creates a TemplateResponse like object using django-render-block to render just a block in a template
-	The format of block is "template_name:block_name"
+	The format of block is "template_name#block_name"
 	'''
 	def __init__(self, request, block, context, **kwargs):
-		template_name, block_name = block.split(':')
+		template_name, block_name = block.split('#')
 		super().__init__(render_block_to_string(template_name=template_name, block_name=block_name, context=context, request=request), **kwargs)
 
 
@@ -92,14 +92,14 @@ class HxResponse(HttpResponse):
 		html = None
 		if 'block' in kwargs:
 			block = kwargs.pop('block', None)
-			if ':' in block:
-				template_name, block_name = block.split(':')
+			if '#' in block:
+				template_name, block_name = block.split('#')
 				html = render_block_to_string(template_name=template_name, block_name=block_name, context=context, request=request)
 			else:
 				html = render_to_string(template_name=block, context=context, request=request)
 		elif 'block' in request.hx:
-			if ':' in request.hx['block']:
-				template_name, block_name = request.hx['block'].split(':')
+			if '#' in request.hx['block']:
+				template_name, block_name = request.hx['block'].split('#')
 				html = render_block_to_string(template_name=template_name, block_name=block_name, context=context, request=request)
 			else:
 				html = render_to_string(template_name=request.hx['block'], context=context, request=request)

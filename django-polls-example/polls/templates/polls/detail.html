@@ -9,16 +9,23 @@
 	<h1>{{ question.question_text }}</h1>
 
 	{% block error_message_area %}
+		{% comment %} 
+			This html is wrapped in a block so it can be referenced in the form below (hx-error-block)
+		{% endcomment %}
 		<p id="error-message">
 			{% if error_message %}<strong>{{ error_message }}</strong>{% endif %}
 		</p>
 	{% endblock %}
 
+	{% comment %} 
+		Blocks can be whole template files or just a block within a template file.
+		In the form below, hx-success-block is referencing a whole file, and hx-error-block is referencing a block within a file.
+	{% endcomment %}
 	<form 
 		hx-post="{% url 'polls:vote' question.id %}"
 		hx-swap="outerHTML"
 		hx-success-block="polls/results.html"
-		hx-error-block="polls/detail.html:error_message_area"
+		hx-error-block="polls/detail.html#error_message_area"
 		hx-error-target="#error-message">
 			{% csrf_token %}
 			{% for choice in question.choice_set.all %}
