@@ -1,15 +1,11 @@
-from http import HTTPStatus
 from django.template.loader import render_to_string
 from render_block import render_block_to_string
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template.response import TemplateResponse
-
-'''6 Aug 2023'''
 
 
 class HxDoNothing(HttpResponse):
 	'''A HttpResponse that tells htmx to do nothing'''
-	status_code = HTTPStatus.NO_CONTENT #204
+	status_code = 204 # No content
 
 
 class HxRedirect(HttpResponseRedirect):

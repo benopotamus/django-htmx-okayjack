@@ -1,3 +1,0 @@
-django
-django-htmx
-django-render-block

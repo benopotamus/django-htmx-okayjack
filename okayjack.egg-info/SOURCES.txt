@@ -1,0 +1,15 @@
+LICENSE
+MANIFEST.in
+README.rst
+pyproject.toml
+setup.cfg
+setup.py
+okayjack/__init__.py
+okayjack/http.py
+okayjack/middleware.py
+okayjack.egg-info/PKG-INFO
+okayjack.egg-info/SOURCES.txt
+okayjack.egg-info/dependency_links.txt
+okayjack.egg-info/requires.txt
+okayjack.egg-info/top_level.txt
+okayjack/static/okayjack/js/htmx.ext.okayjack.js

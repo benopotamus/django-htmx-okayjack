@@ -1,5 +1,3 @@
-'''version 2023.07.02'''
-
 attrs_names = [
 	'Location',
 	'Push-Url',
