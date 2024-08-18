@@ -1,14 +1,15 @@
 Django Okayjack (Django+htmx)
 #############################
 
-Tell htmx what to do with success (200) and error (4xx) responses for a request by using new ``hx-*`` attributes.
+Tell htmx how to handle success (2xx) and error (4xx) responses, and which templates to use for each, just using new ``hx-*`` attributes. 
 
 .. code-block:: html
+
 	hx-success-target="#toast-container"
 	hx-success-trigger="open-toast-container"
 	hx-error-target="#contact-form"
 
-It also adds support for using *parts* of a template in a response, rather than creating separate template responses for each response type. And it adds PUT and PATCH to Django.
+Also adds support for using *parts* (blocks) of a template in a response, rather than creating separate template files for each response type. And it adds PUT and PATCH support to Django as well.
 
 
 Requirements
@@ -25,7 +26,6 @@ Installation
 
 		INSTALLED_APPS = [
 			...,
-			'render_block',
 			'okayjack',
 			...,
 		]
@@ -66,8 +66,8 @@ You can also just reference a template file without the block part (the part aft
 		hx-post="/store"
 		hx-success-target="h1"
 		hx-success-swap="outerHTML"
-		hx-success-block="this-example-file.html:title_success"
-		hx-error-block="this-example-file.html:title_form">
+		hx-success-block="this-example-file.html#title_success"
+		hx-error-block="this-example-file.html#title_form">
 	
 			<input id="title" name="title" type="text" {% if form.title.errors % class="error"{% endif %}>
 			{% if form.title.errors %}
@@ -136,7 +136,7 @@ of the following.
 ``block``
 	This is the path to a template and optional template block. Used to generate the HTML response. 
 	
-	``hx-block="base/home.html:welcome_block"``
+	``hx-block="base/home.html#welcome_block"``
 
 	Blocks are regular Django template blocks.
 
@@ -211,6 +211,6 @@ These are response classes for common htmx actions besides swapping new HTML int
 	Creates a ``TemplateResponse-like`` object using django-render-block to
 	render a block in a template. It's a light wrapper around django-render-block.
 	
-	The format of block is ``template_path/template_name:block_name``.
+	The format of block is ``template_path/template_name#block_name``.
 
-	``BlockResponse('base/home.html:welcome_block')``
+	``BlockResponse('base/home.html#welcome_block')``
