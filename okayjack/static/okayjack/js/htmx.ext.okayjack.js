@@ -9,8 +9,6 @@
  * 
  * It also supports a hx-block attribute, which is for use with a HxResponse Django class and django-render-block.
  * And it supports hx-trigger-after, which htmx doesn't have in request attributes (but supports as a response header)
- * 
- * 20 June 2024
  */
 (function(){
 

@@ -2,6 +2,15 @@
 .venv/
 .vscode/
 __pycache__/
-db.sqlite3
-offcuts/
-uploads/
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+sdist
+develop-eggs
+.installed.cfg
