@@ -53,7 +53,7 @@ Installation
 Examples
 ========
 
-This example shows the new htmx-like attributes being used to specify which DTL block to use for a "success" response, and which to use for an "error" response (e.g. form failed validaiton).
+This example shows the new htmx-like attributes being used to specify which DTL block to use for a "success" response, and which to use for an "error" response (e.g. form failed validation).
 
 The DTL blocks can be in any file - even in the same file as the originating htmx, as is the case in this example.
 
