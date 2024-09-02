@@ -1,7 +1,7 @@
 Django Okayjack (Django+htmx)
 #############################
 
-Tell htmx how to handle success (2xx) and error (4xx) responses, and which templates to use for each, just using new ``hx-*`` attributes. 
+``hx-*`` attributes for specifying different behaviours and templates for a request's success (2xx) and error (4xx) responses. 
 
 .. code-block:: html
 
@@ -9,7 +9,7 @@ Tell htmx how to handle success (2xx) and error (4xx) responses, and which templ
 	hx-success-trigger="open-toast-container"
 	hx-error-target="#contact-form"
 
-Also adds support for using *parts* (blocks) of a template in a response, rather than creating separate template files for each response type. And it adds PUT and PATCH support to Django as well.
+Also adds support for using *parts* (DTL blocks) of a template in a response, rather than creating separate template files for each response type. And it adds PUT and PATCH support to Django as well because they're fun to use 😁.
 
 
 Requirements
@@ -57,7 +57,7 @@ This example shows the new htmx-like attributes being used to specify which DTL 
 
 The DTL blocks can be in any file - even in the same file as the originating htmx, as is the case in this example.
 
-You can also just reference a template file without the block part (the part after the colon).
+You can also just reference a template file without the block part (the part after the ``#``).
 
 .. code-block:: html
 
@@ -96,7 +96,7 @@ Given the above HTML, in the corresponding Django ``views.py`` we now only have 
            return HxSuccessResponse(request, {'form': form})
        return HxErrorResponse(request, {'form': form})
 
-As you can see, all of the UI logic about which template to use for success and error responses has been moved to the template, leaving the ``views.py`` to just specify whether the response should be treated as a success or error.
+As you can see, all of the UI logic about which template, target, etc to use for success and error responses has been moved to the template, leaving the ``views.py`` to just specify whether the response should be treated as a success or error.
 
 API
 ===
@@ -108,9 +108,9 @@ Okayjack supports all htmx response headers https://htmx.org/reference/#response
 
 You can use any combination of: 
 
-* ``hx-*`` attributes. E.g. ``hx-target="..."``
-* ``hx-success-*`` attributes. E.g. ``hx-success-target="..."``. Used when Django returns a ``HxSuccessResponse``.
-* ``hx-error-*`` attributes. E.g. ``hx-error-target="..."``. Used when Django returns a ``HxErrorResponse``.
+* ``hx-*`` attributes``
+* ``hx-success-*``
+* ``hx-error-*``
 
 htmx will use the values of ``hx-*`` unless there is a ``hx-success-*``
 or ``hx-error-*`` value (for a success or error response respectively).
@@ -131,7 +131,7 @@ of the following.
 -  block
 
 ``trigger-after-receive`` 
-	This isn’t a normal htmx attribute. It sets the ``HX-Trigger`` response header. It was renamed so it doesn’t conflict with ``hx-trigger`` for triggering the request itself 🤷
+	This isn’t a normal htmx attribute. It was renamed so it doesn’t conflict with ``hx-trigger`` for triggering the request itself 🤷
 
 ``block``
 	This is the path to a template and optional template block. Used to generate the HTML response. 
@@ -140,7 +140,7 @@ of the following.
 
 	Blocks are regular Django template blocks.
 
-	``{% block welcome_block %}<p>some html here</p>{% endblock }``
+	``{% block welcome_block %}<p>I'm inside a block!</p>{% endblock }``
 
 HttpResponse classes (main)
 ---------------------------
@@ -163,7 +163,7 @@ HttpResponse classes (main)
 
 	This is the base Okayjack response class. It gives you Okayjack's features (using kwargs) but lets you specify which ones to use. 
 	
-	At a minimum, it will automatically get the template/block for the response from either the ``block`` kwarg or the ``HX-Block`` request header. 
+	At a minimum, it will automatically get the template/block for the response from either the ``block`` kwarg or the ``hx-block`` attribute used in the htmx request. 
 
 	``HxResponse(request[, context, block=None, swap=None, trigger-after-receive=None, trigger_after_settle=None, trigger_after_swap=None])``
 	
