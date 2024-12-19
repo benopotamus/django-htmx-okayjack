@@ -1,31 +1,25 @@
 /***
- * htmx extension that looks for extra hx attributes when a request is made and adds them to the request headers.
- * 
- * The intention is this is used with the Django Okayjack middleware to set appropriate response headers to tell htmx what to do in the case of a success or error response. E.g. if hx-success-target is set on the request, the Okayjack middleware will add hx.success['target] to the request object.
- * 
- * It supports all headers listed here https://htmx.org/reference/#response_headers
- * 
- * In the HTML markup, instead of (or in addition to) things like hx-target="..." you can now do hx-success-target="..." or hx-error-target="...".
- * 
- * It also supports a hx-block attribute, which is for use with a HxResponse Django class and django-render-block.
- * And it supports hx-trigger-after, which htmx doesn't have in request attributes (but supports as a response header)
+ * This is an htmx extension that looks for extra hx attributes on elements when a request is made and adds them to the request headers. The intention is this is used with the Django Okayjack middleware (https://pypi.org/project/django-htmx-okayjack/) to set appropriate response headers to tell htmx what to do in the case of a success or error response.
  */
 (function(){
 
-	const htmxAttrsNames = [
-		'Location',
+	// htmx already processes these attributes. We still need to process the hx-success and hx-error variants though
+	const clientProcessedAttrs = [
 		'Push-Url',
-		'Redirect',
-		'Refresh',
 		'Replace-Url',
 		'Swap',
 		'Target',
 	]
-	const customAttrsNames = [
+	// htmx doesn't process these normally. These are new okayjack ones, or those which htmx will only process when they are received in a header from the server
+	const headerAttrs = [
 		'Block',
-		'Trigger-After-Receive',
-		'Trigger-After-Settle',
-		'Trigger-After-Swap',
+		'Do-Nothing',
+		'Fire-After-Receive',
+		'Fire-After-Settle',
+		'Fire-After-Swap',
+		'Location',
+		'Redirect',
+		'Refresh',
 	]
 
 	htmx.defineExtension('okayjack', {
@@ -38,31 +32,35 @@
 						evt.detail.headers[attr] = blockEl.getAttribute(attrLower)
 					}
 				}
-				// Add any success/error attributes - htmx + custom
-				for (let attrName of htmxAttrsNames.concat(customAttrsNames)) {
+
+				// Make general headers for the attributes that htmx doesn't normally process (unless they come in as a response header)
+				for (let attrName of headerAttrs) {
+					appendHxAttribute('HX-'+attrName)
+				}
+
+				// Make success and error headers for all attributes
+				// success and error attributes are all okayjack ones so they need response headers for htmx to process them
+				for (let attrName of headerAttrs.concat(clientProcessedAttrs)) {
 					appendHxAttribute('HX-Success-'+attrName)
 					appendHxAttribute('HX-Error-'+attrName)
 				}
-				// htmx will automatically do whatever its normal attributes specify, but we need to implement our custom attribute by using response headers so we have to send those to the server as well
-				for (let attrName of customAttrsNames) {
-					appendHxAttribute('HX-'+attrName)
-				}
+
 			}
 		}
 	})
 
 	/***
-	 * Swaps in the body of 4xx HTTP status code error pages - except for 422, which okayjack uses to say there was a generic client error
+	 * Swaps in the body of 4xx HTTP status code error pages - except for 422, which we use to denote a generic client error
 	 */
-	document.addEventListener("htmx:beforeOnLoad", function (event) {
-		const xhr = event.detail.xhr
+	document.addEventListener("htmx:beforeOnLoad", function (e) {
+		const xhr = e.detail.xhr
 		if (xhr.status == 422) {
 			// Process 422 status code responses the same way as 200 responses
-			evt.detail.shouldSwap = true;
-			evt.detail.isError = false;
+			e.detail.shouldSwap = true;
+			e.detail.isError = false;
 
 		} else if ((xhr.status >= 400) && (xhr.status < 500)) {
-			event.stopPropagation() // Tell htmx not to process these requests
+			e.stopPropagation() // Tell htmx not to process these requests
 			document.children[0].innerHTML = xhr.response // Swap in body of response instead
 		}
 	})

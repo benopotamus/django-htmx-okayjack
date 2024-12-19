@@ -6,7 +6,7 @@ Django Okayjack (Django+htmx)
 .. code-block:: html
 
 	hx-success-target="#toast-container"
-	hx-success-trigger="open-toast-container"
+	hx-success-fire="open-toast-container"
 	hx-error-target="#contact-form"
 
 Also adds support for using *parts* (DTL blocks) of a template in a response, rather than creating separate template files for each response type. And it adds PUT and PATCH support to Django as well because they're fun to use 😁.
@@ -64,10 +64,11 @@ You can also just reference a template file without the block part (the part aft
 	{% block title_form %}
 	<form 
 		hx-post="/store"
+		hx-success-block="this-example-file.html#title_success"
 		hx-success-target="h1"
 		hx-success-swap="outerHTML"
-		hx-success-block="this-example-file.html#title_success"
-		hx-error-block="this-example-file.html#title_form">
+		hx-error-block="this-example-file.html#title_form"
+		hx-error-target="this">
 	
 			<input id="title" name="title" type="text" {% if form.title.errors % class="error"{% endif %}>
 			{% if form.title.errors %}
@@ -80,7 +81,7 @@ You can also just reference a template file without the block part (the part aft
 	
 	<template>
 	{% block title_success %}
-		<h1>{{ title }}</h1>
+		<h1>{{ store.title }}</h1>
 	{% endblock %}
 	</template>
 
@@ -93,7 +94,7 @@ Given the above HTML, in the corresponding Django ``views.py`` we now only have 
        form = TitleForm(request.POST)
        if form.is_valid():
            form.save()
-           return HxSuccessResponse(request, {'form': form})
+           return HxSuccessResponse(request, {'store': store})
        return HxErrorResponse(request, {'form': form})
 
 As you can see, all of the UI logic about which template, target, etc to use for success and error responses has been moved to the template, leaving the ``views.py`` to just specify whether the response should be treated as a success or error.
@@ -125,13 +126,15 @@ of the following.
 -  replace-url
 -  swap
 -  target
--  trigger-after-receive
--  trigger-after-settle
--  trigger-after-swap
+-  fire-after-receive
+-  fire-after-settle
+-  fire-after-swap
 -  block
 
-``trigger-after-receive`` 
-	This isn’t a normal htmx attribute. It was renamed so it doesn’t conflict with ``hx-trigger`` for triggering the request itself 🤷
+``fire-after-*`` 
+	Use these attributes to specify events you want to fire when the response is returned. The event can be fired either: after receiving, after swapping, or after settling. The names are based on the response headers - see https://htmx.org/headers/hx-trigger/. 
+
+	Note that ``hx-trigger`` is used for specifying which event "triggers" htmx to send a request to the server (i.e. the event that was fired that made htmx do something), whereas these attributes are for specifying which events should be fired when a response is returned.
 
 ``block``
 	This is the path to a template and optional template block. Used to generate the HTML response. 
@@ -142,34 +145,38 @@ of the following.
 
 	``{% block welcome_block %}<p>I'm inside a block!</p>{% endblock }``
 
+	Blocks can also be empty (e.g. hx-block=""). This is useful for deleting objects from the DOM. hx-target the object with the block set to "".
+
+``do-nothing``
+	Returns a HttpResponse with a 204 (No Content) status code.
+
 HttpResponse classes (main)
 ---------------------------
 
 ``HxSuccessResponse``
 
-	Creates a ‘success’ ``HxResponse``. The response will use any ``hx-success-*`` attributes specified in the template.
+	Creates a ‘success’ ``HxResponse``. The response will use ``hx-success-*`` and ``hx-*`` attributes specified in the template.
 	
-	``HxSuccessResponse(request[, context, block=None, swap=None, trigger-after-receive=None, trigger_after_settle=None, trigger_after_swap=None])``
+	``HxSuccessResponse(request[, context, block=None, swap=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 
 ``HxErrorResponse``
 
-	Creates an ‘error’ HxResponse. The response will use any ``hx-error-*``
-	attributes specified in the request markup.
+	Creates an ‘error’ HxResponse. The response will use ``hx-error-*`` and ``hx-*`` attributes specified in the template.
 	
-	``HxErrorResponse(request[, context, block=None, swap=None, trigger-after-receive=None, trigger_after_settle=None, trigger_after_swap=None])``
+	``HxErrorResponse(request[, context, block=None, swap=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 
 
 ``HxResponse``
 
-	This is the base Okayjack response class. It gives you Okayjack's features (using kwargs) but lets you specify which ones to use. 
+	Creates a response that uses ``hx-*`` attributes in the template.
 	
 	At a minimum, it will automatically get the template/block for the response from either the ``block`` kwarg or the ``hx-block`` attribute used in the htmx request. 
 
-	``HxResponse(request[, context, block=None, swap=None, trigger-after-receive=None, trigger_after_settle=None, trigger_after_swap=None])``
+	``HxResponse(request[, context, block=None, swap=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 	
 	``HxResponse(request, { 'form': form })``
 
-	``HxResponse(request, { 'form': form, trigger-after-receive='do-this-when-response-is-received'})``
+	``HxResponse(request, { 'form': form, fire-after-receive='fire-this-event-when-response-is-received'})``
 
 
 HttpResponse classes (extra)
@@ -196,15 +203,14 @@ These are response classes for common htmx actions besides swapping new HTML int
 
 	``HxRefresh()``
 
-``HxTrigger(trigger_after_receive=None, trigger_after_swap=None, trigger_after_settle=None)``
+``HxFire(fire_after_receive=None, fire_after_swap=None, fire_after_settle=None)``
 
-	A ``HttpResponse`` that tells htmx to trigger an event - and do nothing
+	A ``HttpResponse`` that tells htmx to fire (aka trigger) an event - and do nothing
 	else. https://htmx.org/headers/hx-trigger/
 
-	The arg value is the name of the event to trigger. The value can also be a JSON string, which allows for triggering multiple events and/or passing data for the
-	event
+	The arg value is the name of the event to fire. The value can also be a JSON string, which allows for firing multiple events and/or passing data for the event
 
-	``HxTrigger('close-modal')``
+	``HxFire('close-modal')``
 
 ``BlockResponse(block)``
 

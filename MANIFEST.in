@@ -1,4 +1,5 @@
 include LICENSE
 include README.rst
 recursive-include okayjack/static *
-recursive-include docs *
+graft docs
+prune tests

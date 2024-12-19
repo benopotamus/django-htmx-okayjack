@@ -1,52 +1,77 @@
-attrs_names = [
+headerAttrs = [
+	'Block',
+	'Do-Nothing',
+	'Fire-After-Receive',
+	'Fire-After-Settle',
+	'Fire-After-Swap',
 	'Location',
-	'Push-Url',
 	'Redirect',
 	'Refresh',
+]
+
+# These last 4 will never have general request headers (e.g. HX-Swap) because they're processed client side by htmx
+# These should not be added to general otherwise it will confuse things (e.g. HX-Target doesn't have the '#' for the id)	
+clientProcessedAttrs =[
 	'Replace-Url',
 	'Swap',
 	'Target',
-	'Trigger',
-	'Trigger-After-Settle',
-	'Trigger-After-Swap',
-	'Block',
+	#'Push-Url', # Special processing for this one
 ]
 
 
 class OkayjackMiddleware:
+	'''Modifies a request object so the request.method matches the one from the client, and populates the request.hx attribute.
+
+	request.method:
+		Adds PUT or PATCH objects to the Request (if the originating request used one of those methods). It does this by processing as a POST and then just changed the request.method value. POST already has lots of good form processing so this was the least custom way to implement that.
+
+	request.hx
+		This builds on the okayjack htmx extension (the JavaScript one). The extension put all okayjack attribute values into headers in the request so they can be processed in Django. This middleware then takes any okayjack headers and puts them into a request.hx object for later processing in okayjack.http.
+	'''
+
 	def __init__(self, get_response):
 		self.get_response = get_response
 
 	def __call__(self, request):
 		request.hx = {
-			'success': {},
-			'error': {}
+			'success': {},	# For hx-success-* attributes
+			'error': {},	# For hx-error-* attributes
+			'general': {}	# For hx-* attributes
 		}
 
-		# Add Okayjack's custom hx-? attributes to request
-		if 'HX-Block' in request.headers:
-			request.hx['block'] = request.headers['HX-Block']
-		if 'HX-Trigger-After-Receive' in request.headers:
-			request.hx['trigger-after-receive'] = request.headers['HX-Trigger-After-Receive']
-		if 'HX-Trigger-After-Settle' in request.headers:
-			request.hx['trigger-after-settle'] = request.headers['HX-Trigger-After-Settle']
-		if 'HX-Trigger-After-Swap' in request.headers:
-			request.hx['trigger-after-swap'] = request.headers['HX-Trigger-After-Swap']
+		# Copy request headers into the relevant place in request.hx
+		for attr_name in headerAttrs:
+			full_attr_name = f'HX-{attr_name}'
+			if full_attr_name in request.headers:
+				request.hx['general'][attr_name.lower()] = request.headers[full_attr_name]
+				# e.g. request.hx['block'] = request.headers['HX-Block']
 
-		# Add hx-success-* and hx-error-* attributes to request
-		for attr_name in attrs_names:
-			full_attr_name = 'HX-Success-'+attr_name
+		for attr_name in headerAttrs + clientProcessedAttrs:
+			full_attr_name = f'HX-Success-{attr_name}'
 			if full_attr_name in request.headers:
 				request.hx['success'][attr_name.lower()] = request.headers[full_attr_name]
 
-			full_attr_name = 'HX-Error-'+attr_name
+			full_attr_name = f'HX-Error-{attr_name}'
 			if full_attr_name in request.headers:
 				request.hx['error'][attr_name.lower()] = request.headers[full_attr_name]
+
+		# Special processing for Push-Url because it has a feature where if the value is "true", the client url should be changed to the requested url. Only applies to success and error headers as htmx handles the general one already
+		if 'HX-Success-Push-Url' in request.headers:
+			if request.headers['HX-Success-Push-Url'] == 'true':
+				request.hx['success']['push-url'] = request.path
+			else:
+				request.hx['success']['push-url'] = request.headers['HX-Success-Push-Url']
+
+		if 'HX-Error-Push-Url' in request.headers:
+			if request.headers['HX-Error-Push-Url'] == 'true':
+				request.hx['error']['push-url'] = request.path
+			else:
+				request.hx['error']['push-url'] = request.headers['HX-Error-Push-Url']
 
 
 		# For PATCH and PUT, process as a POST request, and then copy the values to request.[method]
 		if request.method == 'PATCH' or request.method == 'PUT':
-			'''	From https://thihara.github.io/Django-Req-Parsing/
+			'''From https://thihara.github.io/Django-Req-Parsing/
 
 			The try/except abominiation here is due to a bug
 			in mod_python. This should fix it.
