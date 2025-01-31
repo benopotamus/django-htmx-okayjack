@@ -29,12 +29,28 @@ class HxFire(HttpResponse):
 	'''A HttpResponse that tells htmx to fire (aka trigger) an event - and do nothing else.
 	https://htmx.org/headers/hx-trigger/
 	
-	fire: the name of the event to fire. Can also be JSON string, which allows for firing multiple events and/or passing data for the event
+	Parameters
+		fire: the name of the event to fire. Can also be JSON string, which allows for firing multiple events and/or passing data for the event
+		fire_after_receive: same as fire, but after receive
+		fire_after_swap: same as fire, but after swap
+		fire_after_settle: same as fire, but after settle
+	
+		Usage
+			HxFire('my-event')
+			HxFire(fire='my-event')
+			HxFire(fire_after_receive='my-event')
+			HxFire(fire_after_swap='my-event')
+			HxFire(fire_after_settle='my-event')
 	'''
-	def __init__(self, fire_after_receive=None, fire_after_swap=None, fire_after_settle=None, *args, **kwargs):
+	def __init__(self, fire=None, *args, fire_after_receive=None, fire_after_swap=None, fire_after_settle=None, **kwargs):
 		super().__init__(*args, **kwargs)
-		if fire_after_receive:
+
+		# Two ways to define HX-Trigger (fire can be a positional or keyword argument)
+		if fire:
+			self['HX-Trigger'] = fire
+		elif fire_after_receive:
 			self['HX-Trigger'] = fire_after_receive
+
 		if fire_after_swap:
 			self['HX-Trigger-After-Swap'] = fire_after_swap
 		if fire_after_swap:
@@ -84,6 +100,8 @@ class HxResponse(HttpResponse):
 			# We shouldn't actually get HxResponses with no context supplied as there other classes to cover those edge cases (e.g. HxRefresh), but avoiding that error is best.
 			try:
 				context = args[0]
+				# HttpResponse doesn't take a 'context' argument so we need to remove that before passing the remaining args to super (the HttpResponse __init__ method)
+				args = args[1:]
 			except IndexError:
 				context = None
 			
@@ -130,6 +148,7 @@ hx_attributes = [
 	{ 'request': 'target', 'response': 'HX-Retarget', 'kwarg': 'target'}, #core
 
 	# These attributes are pure okayjack ones - we need to process them for all of request.hx.*
+	{ 'request': 'fire', 'response': 'HX-Trigger', 'kwarg': 'fire'},
 	{ 'request': 'fire-after-receive', 'response': 'HX-Trigger', 'kwarg': 'fire_after_receive'},
 	{ 'request': 'fire-after-settle', 'response': 'HX-Trigger-After-Settle', 'kwarg': 'fire_after_settle'},
 	{ 'request': 'fire-after-swap', 'response': 'HX-Trigger-After-Swap', 'kwarg': 'fire_after_swap'},

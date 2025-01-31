@@ -17,6 +17,7 @@
 		'Fire-After-Receive',
 		'Fire-After-Settle',
 		'Fire-After-Swap',
+		'Fire', // Shorthand for Fire-After-Receive
 		'Location',
 		'Redirect',
 		'Refresh',
@@ -24,7 +25,7 @@
 
 	htmx.defineExtension('okayjack', {
 		onEvent: function (name, evt) {
-			if (name === "htmx:configRequest") {
+			if (name === 'htmx:configRequest') {
 				function appendHxAttribute(attr) {
 					var attrLower = attr.toLowerCase()
 					var blockEl = htmx.closest(evt.detail.elt, "[" + attrLower + "]") // Find the nearest element with the custom attribute

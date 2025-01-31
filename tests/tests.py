@@ -1,6 +1,6 @@
 from django.test import Client, TestCase
 from django.urls import reverse
-from peek import peek
+# from peek import peek
 from urllib.parse import urlencode
 
 # Help
@@ -30,12 +30,21 @@ class MiddlewareFullChainTestCase(TestCase):
 	
 	def post_general(self, headers):
 		'''
-		Creates a successful HttpResponse with a POST request that used the supplied headers.
-		
-		Note that this is a HttpResponse rather than the HxSuccess response of def success.
-		i.e. this simulates using hx-* attributes rather than hx-success-* (or hx-error-*) attributes
+		Creates an HxResponse with a POST request that used the supplied headers. 
+		This simulates using hx-* attributes rather than hx-success-* (or hx-error-*) attributes
 		'''
 		return self.c.post(reverse('general_form_view'), 
+			content_type='application/x-www-form-urlencoded',
+			data=urlencode({'testfield': 'hi'}),
+			headers=headers,)
+	
+	def post_general_formless(self, headers):
+		'''
+		This is the same as post_general (returns a HxResponse) except there's no form involved. 
+		
+		This is an edge case as okayjack provides various HxResponse subclasses for returning a response that doesn't use a form (e.g. HxFire), so it's expected that users would use those subclasses instead.
+		'''
+		return self.c.post(reverse('general_formless_view'), 
 			content_type='application/x-www-form-urlencoded',
 			headers=headers,)
 	
@@ -59,6 +68,7 @@ class MiddlewareFullChainTestCase(TestCase):
 		'''Creates a successful HttpResponse with a PATCH request that used the supplied headers.'''
 		return self.c.patch(reverse('general_form_view'), 
 			content_type='application/x-www-form-urlencoded',
+			data=urlencode({'testfield': 'hi'}),
 			headers=headers,)
 	
 	# DELETE requests
@@ -75,6 +85,20 @@ class MiddlewareFullChainTestCase(TestCase):
 		'''Creates a successful HttpResponse with a DELETE request that used the supplied headers.'''
 		return self.c.delete(reverse('error_delete_view'), headers=headers,)
 		
+
+	# General requests with views that set hx-trigger
+
+	def hx_fire(self):
+		'''Creates an HxFire response'''
+		return self.c.post(reverse('hx_fire_view'))
+	
+	def hx_fire_after_swap(self):
+		'''Creates an HxFire response'''
+		return self.c.post(reverse('hx_fire_after_swap_view'))
+
+
+
+
 
 
 	##################################### TESTS ########################################
@@ -117,7 +141,13 @@ class MiddlewareFullChainTestCase(TestCase):
 		response = self.post_error({'HX-Error-Fire-After-Receive': 'error-event'})
 		self.assertEquals(response.status_code, 422)
 		self.assertEquals(response.headers.get('HX-Trigger'), 'error-event')
-	
+
+	def test_fire(self):
+		# 'fire' is a shorthand for hx-fire-after-receive (or success/error variants), we're testing that the shorthand works here
+		response = self.post_general({'HX-Fire': 'testevent'})
+		self.assertEquals(response.status_code, 200)
+		self.assertEquals(response.headers.get('HX-Trigger'), 'testevent')
+
 
 	### Fire-After-Settle
 
@@ -159,6 +189,20 @@ class MiddlewareFullChainTestCase(TestCase):
 		self.assertEquals(response.status_code, 422)
 		self.assertEquals(response.headers.get('HX-Trigger-After-Swap'), 'testevent')
 		self.assertEquals(response.headers.get('HX-Trigger'), None)
+
+
+	### Fire via view
+	# In these tests, we're simulating the user defining the fire/trigger behaviour in the view, rather than in the markup via headers
+			
+	def test_view_hx_fire(self):
+		response = self.hx_fire() # No event passed, it is being set in the view
+		self.assertEquals(response.status_code, 200)
+		self.assertEquals(response.headers.get('HX-Trigger'), 'testevent')
+
+	def test_view_hx_fire_after_swap(self):
+		response = self.hx_fire_after_swap() # No event passed, it is being set in the view
+		self.assertEquals(response.status_code, 200)
+		self.assertEquals(response.headers.get('HX-Trigger-After-Swap'), 'testevent')
 
 
 	### Location

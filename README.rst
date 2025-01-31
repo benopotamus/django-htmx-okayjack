@@ -129,12 +129,16 @@ of the following.
 -  fire-after-receive
 -  fire-after-settle
 -  fire-after-swap
+-  fire
 -  block
 
 ``fire-after-*`` 
 	Use these attributes to specify events you want to fire when the response is returned. The event can be fired either: after receiving, after swapping, or after settling. The names are based on the response headers - see https://htmx.org/headers/hx-trigger/. 
 
 	Note that ``hx-trigger`` is used for specifying which event "triggers" htmx to send a request to the server (i.e. the event that was fired that made htmx do something), whereas these attributes are for specifying which events should be fired when a response is returned.
+
+``fire`` 
+	Shorthand for ``fire-after-receive``
 
 ``block``
 	This is the path to a template and optional template block. Used to generate the HTML response. 
@@ -203,14 +207,14 @@ These are response classes for common htmx actions besides swapping new HTML int
 
 	``HxRefresh()``
 
-``HxFire(fire_after_receive=None, fire_after_swap=None, fire_after_settle=None)``
+``HxFire(fire=None, fire_after_receive=None, fire_after_swap=None, fire_after_settle=None)``
 
-	A ``HttpResponse`` that tells htmx to fire (aka trigger) an event - and do nothing
-	else. https://htmx.org/headers/hx-trigger/
+	A ``HttpResponse`` that tells htmx to fire (aka trigger) an event - and do nothing else. https://htmx.org/headers/hx-trigger/
+	The arg value is the name of the event to fire. If the event name is supplied as a positional argument, ``fire_after_received`` is used. 
+	
+	``HxFire('close-dialog-box')``
 
-	The arg value is the name of the event to fire. The value can also be a JSON string, which allows for firing multiple events and/or passing data for the event
-
-	``HxFire('close-modal')``
+	The value can also be a JSON string, which allows for firing multiple events and/or passing data for the event. 
 
 ``BlockResponse(block)``
 

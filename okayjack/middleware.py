@@ -4,6 +4,7 @@ headerAttrs = [
 	'Fire-After-Receive',
 	'Fire-After-Settle',
 	'Fire-After-Swap',
+	'Fire', # Fire is a shorthand for Fire-After-Receive
 	'Location',
 	'Redirect',
 	'Refresh',
