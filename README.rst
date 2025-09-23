@@ -1,15 +1,41 @@
 Django Okayjack (Django+htmx)
 #############################
 
-``hx-*`` attributes for specifying different behaviours and templates for a request's success (2xx) and error (4xx) responses. 
+Okayjack adds a few extra ``hx-*`` attributes which let you create conditional response rules (i.e. for success (2xx) and error (4xx) responses) in the template instead of the View. This results in much simpler Views.
 
 .. code-block:: html
 
-	hx-success-target="#toast-container"
-	hx-success-fire="open-toast-container"
-	hx-error-target="#contact-form"
+	<form hx-patch="/contacts"
+		hx-success-block="page.html#toast"
+		hx-success-target="#toast-container"
+		hx-error-block="page.html#form"
+		hx-error-target="#contact-form">
 
-Also adds support for using *parts* (DTL blocks) of a template in a response, rather than creating separate template files for each response type. And it adds PUT and PATCH support to Django as well because they're fun to use 😁.
+.. code-block:: python
+
+   def contacts(request, question_id):
+       form = ContactForm(request.PATCH)
+       if form.is_valid():
+           form.save()
+           return HxSuccessResponse(request)
+       return HxErrorResponse(request, {'form': form})
+
+The ``hx-success-*`` attributes are used when the response is ``HxSuccessResponse``, and ``hx-error-*`` attributes for ``HxErrorResponse``.
+
+The extra attributes don't change htmx, all the regular htmx attributes work as normal and you can mix them as you wish. The extra attributes, combined with the Django Hx classes, just set htmx response headers which htmx processes as it normally would.
+
+Okayjack also adds support for using *parts* of a template (DTL ``block``s) in a response, rather than creating separate template files for each response. 
+
+And it adds PUT and PATCH support to Django as well because they're nice to use 😁.
+
+Table of contents
+=================
+
+* `Requirements <#requirements>`_
+* `Installation <#installation>`_
+* `htmx attributes <#htmx-attributes>`_
+* `Django API <#django-api>`_
+* `Extended example <#extended-example>`_
 
 
 Requirements
@@ -50,60 +76,8 @@ Installation
 		<body hx-ext="okayjack>
 
 
-Examples
-========
-
-This example shows the new htmx-like attributes being used to specify which DTL block to use for a "success" response, and which to use for an "error" response (e.g. form failed validation).
-
-The DTL blocks can be in any file - even in the same file as the originating htmx, as is the case in this example.
-
-You can also just reference a template file without the block part (the part after the ``#``).
-
-.. code-block:: html
-
-	{% block title_form %}
-	<form 
-		hx-post="/store"
-		hx-success-block="this-example-file.html#title_success"
-		hx-success-target="h1"
-		hx-success-swap="outerHTML"
-		hx-error-block="this-example-file.html#title_form"
-		hx-error-target="this">
-	
-			<input id="title" name="title" type="text" {% if form.title.errors % class="error"{% endif %}>
-			{% if form.title.errors %}
-				<div class='error'>{{ form.title.errors }}</div>
-			{% endif %}
-			<button type="submit">Submit</button>
-	
-	</form>
-	{% endblock %}
-	
-	<template>
-	{% block title_success %}
-		<h1>{{ store.title }}</h1>
-	{% endblock %}
-	</template>
-
-
-Given the above HTML, in the corresponding Django ``views.py`` we now only have to do the following to handle both success and error variations.
-
-.. code-block:: python
-
-   def title(request, question_id):
-       form = TitleForm(request.POST)
-       if form.is_valid():
-           form.save()
-           return HxSuccessResponse(request, {'store': store})
-       return HxErrorResponse(request, {'form': form})
-
-As you can see, all of the UI logic about which template, target, etc to use for success and error responses has been moved to the template, leaving the ``views.py`` to just specify whether the response should be treated as a success or error.
-
-API
-===
-
-htmx extension
---------------
+htmx attributes
+===============
 
 Okayjack supports all htmx response headers https://htmx.org/reference/#response_headers.
 
@@ -113,11 +87,9 @@ You can use any combination of:
 * ``hx-success-*``
 * ``hx-error-*``
 
-htmx will use the values of ``hx-*`` unless there is a ``hx-success-*``
-or ``hx-error-*`` value (for a success or error response respectively).
+htmx will use the values of ``hx-*`` unless there is a ``hx-success-*`` or ``hx-error-*`` value (for a success or error response respectively).
 
-The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any
-of the following.
+The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the following.
 
 -  location
 -  push-url
@@ -133,7 +105,7 @@ of the following.
 -  block
 
 ``fire-after-*`` 
-	Use these attributes to specify events you want to fire when the response is returned. The event can be fired either: after receiving, after swapping, or after settling. The names are based on the response headers - see https://htmx.org/headers/hx-trigger/. 
+	Use these attributes to specify events you want to fire when the response is returned. The event can be fired after receiving, swapping, or settling. The names are based on the response headers - see https://htmx.org/headers/hx-trigger/. 
 
 	Note that ``hx-trigger`` is used for specifying which event "triggers" htmx to send a request to the server (i.e. the event that was fired that made htmx do something), whereas these attributes are for specifying which events should be fired when a response is returned.
 
@@ -149,13 +121,15 @@ of the following.
 
 	``{% block welcome_block %}<p>I'm inside a block!</p>{% endblock }``
 
-	Blocks can also be empty (e.g. hx-block=""). This is useful for deleting objects from the DOM. hx-target the object with the block set to "".
-
 ``do-nothing``
 	Returns a HttpResponse with a 204 (No Content) status code.
 
-HttpResponse classes (main)
----------------------------
+
+Django API
+==========
+
+Main classes
+------------
 
 ``HxSuccessResponse``
 
@@ -183,8 +157,8 @@ HttpResponse classes (main)
 	``HxResponse(request, { 'form': form, fire-after-receive='fire-this-event-when-response-is-received'})``
 
 
-HttpResponse classes (extra)
-----------------------------
+Additional handy classes
+------------------------
 
 These are response classes for common htmx actions besides swapping new HTML into the page.
 
@@ -224,3 +198,102 @@ These are response classes for common htmx actions besides swapping new HTML int
 	The format of block is ``template_path/template_name#block_name``.
 
 	``BlockResponse('base/home.html#welcome_block')``
+
+
+Extended example
+================
+
+Let's say you have a basic contact form.
+
+.. code-block:: html
+
+	<form method="post" action="/contact">
+		{{ form.as_div }}
+		<button type='submit'>
+	</form>
+
+To receive data on the server you have a basic View. It validates the Form, and returns a success or error page.
+
+.. code-block:: Python
+
+	def contact(request):
+		form = ContactForm(request.POST or None)
+		if form.is_valid():
+			form.save()
+			return render(request, "contact_success.html", {'form': form})
+		return render(request, "contact_error.html", {'form': form})
+
+With htmx, you can return partials instead of full pages, and swap them into the page. So you might decide to add an extra section to swap a success message into - no page refresh required 🥳. The partial needs to be a separate file so it can be used as a template in the View.
+
+.. code-block:: html
+
+	{% include 'app/partials/success-message.html' %}
+	<form hx-post="/contact" hx-target="#success-message">
+		{{ form.as_div }}
+		<button type='submit'>
+	</form>
+
+The View will need a little update to reference the partial.
+
+.. code-block:: Python
+
+	def contact(request):
+		form = ContactForm(request.POST or None)
+		if form.is_valid():
+			form.save()
+			return render(request, "app/partials/contact_success.html", {'form': form})
+		return = render(request, "contact_error.html", {'form': form})
+
+This will work well for a successful form submission, but if there's an error, it will refresh the page. It would be nicer to swap out the form with one that displays the errors instead - no page refresh. We do this of course in the View using Response headers https://htmx.org/reference/#response_headers.
+
+.. code-block:: Python
+	def contact(request):
+		form = ContactForm(request.POST or None)
+		if form.is_valid():
+			form.save()
+			return render(request, "app/partials/contact_success.html", {'form': form})
+
+		response = render(request, "app/partials/contact_error.html", {'form': form})
+		response['HX-Retarget'] = 'form'
+		return response
+
+And that's it for vanilla htmx. We now have a page which submits a form, and uses htmx to swap in the results depending upon whether it is valid or invalid. 
+
+One downside is that to understand the UI behaviour and see what html will be generated, we now need to read three templates (2 partials + the main page) plus the View. It's not terrible but can get tedious.
+
+With Okayjack, we move most/all of the UI behaviour to the template so it can be read all in one place.
+
+.. code-block:: html
+
+	{% block success_message %}
+		<div id='success-message' class='alert success tick'></div>
+	{% endblock %}
+	<form 
+		hx-post="/contact" 
+		hx-success-target="#success-message"
+		hx-success-block="contacts.html#success_message"
+		hx-error-target="form"
+		hx-error-block="contacts.html#contact_form">
+			{% block contact_form %}
+				{{ form.as_div }}
+			{% endblock %}
+			<button type='submit'>
+	</form>
+
+Because of the above, we can now simplify the view. 
+
+.. code-block:: Python
+
+	def contact(request):
+		form = ContactForm(request.POST or None)
+		if form.is_valid():
+			form.save()
+			return HxSuccessResponse(request)
+		return HxErrorResponse(request, {'form': form})
+
+The changes in the above example using Okayjack are:
+
+1. We reference ``{% blocks %}`` to get our partials rather than seperate files, which keeps the html in one place.
+2. We specify different ``target`` and ``block`` attributes for use with successful/valid or error/invalid requests.
+3. We have the one ``hx-post`` attribute still. There's no need to specify it twice when it's the same for both.
+4. Valid forms return ``HxSuccessResponse``, invalid returns ``HxErrorResponse``. Our View now longer needs to do Retargets, etc, and it doesn't need to specify which partials/blocks to use, so it becomes simple enough that it can usually be ignored when reading templates.

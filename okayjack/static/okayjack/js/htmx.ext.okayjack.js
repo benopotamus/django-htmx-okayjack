@@ -52,13 +52,24 @@
 
 	/***
 	 * Swaps in the body of 4xx HTTP status code error pages - except for 422, which we use to denote a generic client error
+	 * 
+	 * Responses can also have a HX-Do-Nothing header, which htmx supports natively by using a 204 response code.
+	 * We want to support having 4xx response codes that also don't swap, so this listener has some extra code for that.
 	 */
 	document.addEventListener("htmx:beforeOnLoad", function (e) {
 		const xhr = e.detail.xhr
+		const doNothing = xhr.getResponseHeader("HX-Do-Nothing")
+
+		if (doNothing) {
+			e.detail.shouldSwap = false
+		}
+
 		if (xhr.status == 422) {
 			// Process 422 status code responses the same way as 200 responses
-			e.detail.shouldSwap = true;
-			e.detail.isError = false;
+			e.detail.isError = false
+			if (!doNothing) {
+				e.detail.shouldSwap = true
+			}
 
 		} else if ((xhr.status >= 400) && (xhr.status < 500)) {
 			e.stopPropagation() // Tell htmx not to process these requests

@@ -1,2 +1,6 @@
 django
 django-render-block
+
+# These packages are used for tests.py
+#django-rainbowtests
+#peek-python
