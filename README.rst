@@ -13,12 +13,12 @@ Okayjack adds a few extra ``hx-*`` attributes which let you create conditional r
 
 .. code-block:: python
 
-   def contacts(request, question_id):
-       form = ContactForm(request.PATCH)
-       if form.is_valid():
-           form.save()
-           return HxSuccessResponse(request)
-       return HxErrorResponse(request, {'form': form})
+	def contacts(request, question_id):
+		form = ContactForm(request.PATCH)
+		if form.is_valid():
+			form.save()
+			return HxSuccessResponse(request)
+		return HxErrorResponse(request, {'form': form})
 
 The ``hx-success-*`` attributes are used when the response is ``HxSuccessResponse``, and ``hx-error-*`` attributes for ``HxErrorResponse``.
 
