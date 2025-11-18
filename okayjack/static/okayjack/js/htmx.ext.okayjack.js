@@ -27,10 +27,18 @@
 		onEvent: function (name, evt) {
 			if (name === 'htmx:configRequest') {
 				function appendHxAttribute(attr) {
-					var attrLower = attr.toLowerCase()
-					var blockEl = htmx.closest(evt.detail.elt, "[" + attrLower + "]") // Find the nearest element with the custom attribute
+					let attrLower = attr.toLowerCase() // attrLower e.g. 'hx-refresh'
+					let blockEl = htmx.closest(evt.detail.elt, "[" + attrLower + "]") // Find the nearest element with the custom attribute
 					if (blockEl) {
-						evt.detail.headers[attr] = blockEl.getAttribute(attrLower)
+						let value = blockEl.getAttribute(attrLower)
+						
+						// Special case for refresh.
+						// If a url path isn't included, default to the current page
+						if (attrLower.indexOf('refresh') && ((value == '') || (value.toLowerCase() == 'true'))) {
+							value = window.location.pathname + window.location.search
+						}
+						
+						evt.detail.headers[attr] = value
 					}
 				}
 

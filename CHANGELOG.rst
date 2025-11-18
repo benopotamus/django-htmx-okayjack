@@ -3,6 +3,14 @@
 Changelog
 #########
 
+3.0 (18 Nov 2025)
+=================
+
+Breaking change
+---------------
+
+* *Minor* breaking change really. ``hx-refresh`` and ``HxRefresh`` now support a "body swap" refresh. The normal refresh style is to set a ``HX-Refresh`` response header which causes htmx to issue a new GET request to the url the client is on, which causes the url to be reloaded and thus the page refreshed. The "body swap" way is includes a page refresh worth of html in the first response and swaps the body element from that html into the DOM, thus removing the need for the second GET request. ``hx-refresh=true`` will do a normal refresh, ``hx-refresh`` or ``hx-refresh="{% url 'somepath' arg1 etc %}"`` will do a body swap style refresh.
+
 2.1 (23 Sep 2025)
 =================
 

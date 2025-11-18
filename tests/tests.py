@@ -184,6 +184,8 @@ class MiddlewareFullChainTestCase(TestCase):
 
 
 	### Refresh
+	# TODO add tests for:
+	#	if refresh value is set using {% url %}
 
 	def test_refresh(self):
 		response = test_requests.post_general(self, {'HX-Refresh': 'true'})
@@ -198,17 +200,6 @@ class MiddlewareFullChainTestCase(TestCase):
 	def test_error_refresh(self):
 		response = test_requests.post_error(self, {'HX-Error-Refresh': 'true'})
 		self.assertEqual(response.status_code, 422)
-		self.assertEqual(response.headers.get('HX-Refresh'), 'true')
-
-	# These last 2 test that the user can do hx-refresh attributes without a value
-	def test_refresh_empty_string(self):
-		response = test_requests.post_general(self, {'HX-Refresh': ''})
-		self.assertEqual(response.status_code, 200)
-		self.assertEqual(response.headers.get('HX-Refresh'), 'true')
-
-	def test_success_refresh_empty_string(self):
-		response = test_requests.post_success(self, {'HX-Success-Refresh': ''})
-		self.assertEqual(response.status_code, 200)
 		self.assertEqual(response.headers.get('HX-Refresh'), 'true')
 
 

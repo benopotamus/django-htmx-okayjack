@@ -24,7 +24,7 @@ The ``hx-success-*`` attributes are used when the response is ``HxSuccessRespons
 
 The extra attributes don't change htmx, all the regular htmx attributes work as normal and you can mix them as you wish. The extra attributes, combined with the Django Hx classes, just set htmx response headers which htmx processes as it normally would.
 
-Okayjack also adds support for using *parts* of a template (DTL ``block``s) in a response, rather than creating separate template files for each response. 
+Okayjack also adds support for using *parts* of a template (DTL ``{% block %}``) in a response, rather than creating separate template files for each response. 
 
 And it adds PUT and PATCH support to Django as well because they're nice to use 😁.
 
@@ -104,6 +104,18 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 -  fire
 -  block
 
+``refresh``
+	This attribute supports two types of refresh.
+
+	1. ``hx-refresh="true"`` will do the normal refresh that is achieved by setting the ``HX-Refresh`` response header to ``true`` - see https://htmx.org/reference/#response_headers. 
+	2. ``hx-refresh`` (without an attribute value) will call the view that handles the current url and returns a response that contains the html from that view (assumes a GET request to the view). When the response is received by htmx, the ``body`` element of the page is replaced with the ``body`` element from the response content. 
+	
+	This second refresh style acheives the same result as a normal refresh except it does not require the additional GET request that the normal method uses, and the content is swapped into the page which results in less/no page loading flicker.
+	
+	If the attribute value is a path, that will be used to generate the html instead of the current page's url.
+
+	e.g. ``hx-refresh="{% url 'a_different_view' arg1 etc %}"``
+
 ``fire-after-*`` 
 	Use these attributes to specify events you want to fire when the response is returned. The event can be fired after receiving, swapping, or settling. The names are based on the response headers - see https://htmx.org/headers/hx-trigger/. 
 
@@ -135,13 +147,13 @@ Main classes
 
 	Creates a ‘success’ ``HxResponse``. The response will use ``hx-success-*`` and ``hx-*`` attributes specified in the template.
 	
-	``HxSuccessResponse(request[, context, block=None, swap=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
+	``HxSuccessResponse(request[, context, block=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 
 ``HxErrorResponse``
 
 	Creates an ‘error’ HxResponse. The response will use ``hx-error-*`` and ``hx-*`` attributes specified in the template.
 	
-	``HxErrorResponse(request[, context, block=None, swap=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
+	``HxErrorResponse(request[, context, block=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 
 
 ``HxResponse``
@@ -150,7 +162,7 @@ Main classes
 	
 	At a minimum, it will automatically get the template/block for the response from either the ``block`` kwarg or the ``hx-block`` attribute used in the htmx request. 
 
-	``HxResponse(request[, context, block=None, swap=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
+	``HxResponse(request[, context, block=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 	
 	``HxResponse(request, { 'form': form })``
 
@@ -177,9 +189,15 @@ These are response classes for common htmx actions besides swapping new HTML int
 
 ``HxRefresh``
 
-	A ``HttpResponse`` that tells htmx to refresh the page
+	A ``HttpResponse`` that tells htmx to refresh the page. 
 
 	``HxRefresh()``
+
+	If a path is provided, instead of the usual refresh operation, the response will include the html of the path along with headers to tell htmx to replace the ``body`` element in the page with the ``body`` element in the response content. The net result is a page refresh without the second network request and without the usual page refresh screen flicker (as the content is being swapped in rather than being reloaded via a GET request).
+
+	In the following example, Django's reverse (from ``django.urls``) is used to create the path.
+
+	``HxRefresh(request, reverse('add_client', args=[client.id]))``
 
 ``HxFire(fire=None, fire_after_receive=None, fire_after_swap=None, fire_after_settle=None)``
 
@@ -247,6 +265,7 @@ The View will need a little update to reference the partial.
 This will work well for a successful form submission, but if there's an error, it will refresh the page. It would be nicer to swap out the form with one that displays the errors instead - no page refresh. We do this of course in the View using Response headers https://htmx.org/reference/#response_headers.
 
 .. code-block:: Python
+
 	def contact(request):
 		form = ContactForm(request.POST or None)
 		if form.is_valid():
@@ -296,4 +315,4 @@ The changes in the above example using Okayjack are:
 1. We reference ``{% blocks %}`` to get our partials rather than seperate files, which keeps the html in one place.
 2. We specify different ``target`` and ``block`` attributes for use with successful/valid or error/invalid requests.
 3. We have the one ``hx-post`` attribute still. There's no need to specify it twice when it's the same for both.
-4. Valid forms return ``HxSuccessResponse``, invalid returns ``HxErrorResponse``. Our View now longer needs to do Retargets, etc, and it doesn't need to specify which partials/blocks to use, so it becomes simple enough that it can usually be ignored when reading templates.
+4. Valid forms return ``HxSuccessResponse``, invalid returns ``HxErrorResponse``. Our View no longer needs to do Retargets, etc, and it doesn't need to specify which partials/blocks to use, so it becomes simple enough that it can usually be ignored when reading templates.
