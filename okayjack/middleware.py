@@ -1,5 +1,6 @@
 headerAttrs = [
 	'Block',
+	'Partial',
 	'Do-Nothing',
 	'Fire-After-Receive',
 	'Fire-After-Settle',
@@ -8,6 +9,7 @@ headerAttrs = [
 	'Location',
 	'Redirect',
 	'Refresh',
+	'Alert',
 ]
 
 # These last 4 will never have general request headers (e.g. HX-Swap) because they're processed client side by htmx

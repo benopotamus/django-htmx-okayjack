@@ -1,12 +1,13 @@
+import base64
 from render_block import render_block_to_string
 from django.template.loader import render_to_string
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.urls import resolve
 
 
-# The list of HTMX attributes that HxResponse recognises, and their header equivalent (for telling HTMX to do something different when it receives the response). kwarg is the kwarg name used when creating a HxResponse directly
+# The list of htmx attributes that HxResponse recognises, and their header equivalent (for telling htmx to do something different when it receives the response). kwarg is the kwarg name used when creating a HxResponse directly
 hx_attributes = [
-	# These attributes are native htmx ones. They don't come in request.hx.general - because htmx will process them by default. We wnly need to process them in request.hx.success/error situations.
+	# These attributes are native htmx ones. They don't come in request.hx.general - because htmx will process them by default. We only need to process them in request.hx.success/error situations.
 	{ 'request': 'location', 'response': 'HX-Location', 'kwarg': 'location'},
 	{ 'request': 'push-url', 'response': 'HX-Push-Url', 'kwarg': 'push_url'}, #core
 	{ 'request': 'redirect', 'response': 'HX-Redirect', 'kwarg': 'redirect'},
@@ -20,9 +21,31 @@ hx_attributes = [
 	{ 'request': 'fire-after-receive', 'response': 'HX-Trigger', 'kwarg': 'fire_after_receive'},
 	{ 'request': 'fire-after-settle', 'response': 'HX-Trigger-After-Settle', 'kwarg': 'fire_after_settle'},
 	{ 'request': 'fire-after-swap', 'response': 'HX-Trigger-After-Swap', 'kwarg': 'fire_after_swap'},
+	{ 'request': 'alert', 'response': 'HX-Alert', 'kwarg': 'alert'},
 
-	# There is also the "do_nothing" and "block" attributes, but we process them in special ways. (They don't do htmx overrides like the above attributes do)
+	# There is also the "do_nothing", "partial", and "block" attributes, but we process them in special ways. (They don't do htmx overrides like the above attributes do)
 ]
+
+class HxAlert(HttpResponse):
+	'''A HttpResponse that tells htmx to execute window.alert - and do nothing else.
+	The message is encoded so it can include new line characters and be passed using an http header.'''
+	def __init__(self, alert_text:str, *args, **kwargs):
+
+		# This class doesn't need the request object unlike the other classes.
+		# This might trip people up so we just silently do what they were trying to do in the first place
+		if isinstance(alert_text, HttpRequest):
+			alert_text = args[0]
+
+		super().__init__(*args, **kwargs)
+		self['HX-Alert'] = base64.b64encode(alert_text.encode("utf-8")).decode("ascii")
+		self['HX-Reswap'] = 'none'
+	status_code = 200
+
+class HxErrorAlert(HxAlert):
+	'''422 variant of HxAlert'''
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+	status_code = 422
 
 
 class HxDoNothing(HttpResponse):
@@ -120,6 +143,8 @@ class HxFire(HttpResponse):
 		if fire_after_swap:
 			self['HX-Trigger-After-Settle'] = fire_after_settle
 
+		self['HX-Reswap'] = 'none'
+
 
 class BlockResponse(HttpResponse):
 	'''Creates a TemplateResponse like object using django-render-block to render just a block in a template
@@ -164,7 +189,7 @@ class HxResponse(HttpResponse):
 			or request.hx['general'].get('refresh')
 		)
 
-		# Processing shortcuts for DoNothing or Refresh. If either of these are present, none of the other hx attributes apply, so these checks allow the HxResponse to return without processing the block etc.
+		# Processing shortcuts for DoNothing or Refresh. If either of these are present, none of the other hx attributes apply, so these checks allow the HxResponse to return without processing the partial/block etc.
 
 		if do_nothing:
 				# Default to status 204 for do-nothing responses
@@ -207,15 +232,23 @@ class HxResponse(HttpResponse):
 			except IndexError:
 				context = None
 
-			# HxSuccessResponse and HxErrorResponse will pass the block reference in kwargs
-			# If the user is using hx-block, that will be in request.hx['general']['block']
+
+			# HxSuccessResponse and HxErrorResponse will pass the either a partial or a block reference in kwargs
+			# If the user is using hx-partial or hx-block, that will be in request.hx['general']['partial'] or request.hx['general']['block']
+			partial = (kwargs.pop('partial', None) or 
+				(request.hx[state].get('partial') if state else None) or 
+				request.hx['general'].get('partial') or 
+				None)
+			
 			block = (kwargs.pop('block', None) or 
 				(request.hx[state].get('block') if state else None) or 
 				request.hx['general'].get('block') or 
 				None)
-
-			# Render HTML from context and block reference (if supplied)
-			if block:
+			
+			# Render HTML from context and partial/block reference (if supplied)
+			if partial:
+				html = render_to_string(template_name=partial, context=context, request=request)
+			elif block:
 				if '#' in block:
 					template_name, block_name = block.split('#')
 					html = render_block_to_string(template_name=template_name, block_name=block_name, context=context, request=request)
@@ -224,14 +257,21 @@ class HxResponse(HttpResponse):
 			else:
 				# Sometimes we don't want any response body. An empty block (i.e. hx-block="") will end up here as well.
 				html = ''
+			
+
+			# base64 encode alerts that are passed in by kwarg
+			# alert text from the client will already be base64 encoded, so we can pass that back to the client as-is
+			if 'alert' in kwargs:
+				kwargs['alert'] = base64.b64encode(kwargs['alert'].encode("utf-8")).decode("ascii")
 
 			# Pop any special okayjack keyword args so the remaining kwargs can be sent to HttpResponse
 			# While we're at it, we determine all the values which should be included in the HttpResponse
 			response_values = {}
 			for attr in hx_attributes:
-				if value := (kwargs.pop(attr['kwarg'], None) or 
-					(request.hx[state].get(attr['request']) if state else None) or
-					request.hx['general'].get(attr['request'])):
+				if value := (kwargs.pop(attr['kwarg'], None) 
+				 	or (request.hx[state].get(attr['request']) if state else None) 
+					or request.hx['general'].get(attr['request'])):
+						
 						response_values[attr['response']] = value
 
 			# Create HttpResponse
@@ -240,6 +280,11 @@ class HxResponse(HttpResponse):
 			# `status` kwarg is used by okayjack as well as HttpResponse. 
 			# For okayjack usage, the value is in the request.state object so we need to explicitly include it as a kwarg to HttpResponse here.
 			super().__init__(html, *args, status=status, **kwargs)
+
+			# If no block was selected, no swapping needs to be done. 
+			# This is useful when using hx-alert without a block. There's no need to set hx-swap=none
+			if html == '':
+				self['HX-Reswap'] = 'none'
 
 			# Set response headers
 			for key, value in response_values.items():

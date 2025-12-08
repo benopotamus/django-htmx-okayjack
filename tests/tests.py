@@ -269,6 +269,30 @@ class MiddlewareFullChainTestCase(TestCase):
 		self.assertEqual(response.content.decode(), expected_html)
 
 
+	### Partials
+	# https://docs.djangoproject.com/en/6.0/ref/templates/language/#template-partials
+	# 
+	# These tests are the same as the Block ones above, and index_partial_tests.html is the same as index.html, except it tests usage of Django partials instead of blocks.
+
+	def test_partial(self):
+		response = test_requests.post_general(self, {'HX-Partial': 'tests/index_partial_tests.html#main_area'})
+		expected_html = '<div id="main">I am the main section 😎</div>'
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.content.decode(), expected_html)
+
+	def test_success_partial(self):
+		response = test_requests.post_success(self, {'HX-Success-Partial': 'tests/index_partial_tests.html#main_area'})
+		expected_html = '<div id="main">I am the main section 😎</div>'
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.content.decode(), expected_html)
+
+	def test_error_partial(self):
+		response = test_requests.post_error(self, {'HX-Error-Partial': 'tests/index_partial_tests.html#errors_block'})
+		expected_html = '<div id="errors"></div>'
+		self.assertEqual(response.status_code, 422)
+		self.assertEqual(response.content.decode(), expected_html)
+
+
 	### hx-patch tests
 	# We don't test much for these because post, patch, and put are treated the same way - okayjack is about hx attributes being turned into headers
 
@@ -319,7 +343,6 @@ class MiddlewareFullChainTestCase(TestCase):
 			'HX-Success-Block': 'tests/index.html#main_area', }
 		)
 		html_main = '<div id="main">I am the main section 😎</div>'
-		html_foo = '<div id="foo">Yo!</div>'
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(response.content.decode(), html_main)
 
