@@ -36,6 +36,10 @@ class OkayjackMiddleware:
 		self.get_response = get_response
 
 	def __call__(self, request):
+		# Add a hx_refresh variable to the context.
+		# This is a user convenience; useful for conditional rendering. E.g. {% if request.hx_refresh }<script>...</script>{% endif %}
+		request.hx_refresh = request.headers.get('Hx-Refresh')
+
 		request.hx = {
 			'success': {},	# For hx-success-* attributes
 			'error': {},	# For hx-error-* attributes

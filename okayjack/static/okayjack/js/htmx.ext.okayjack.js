@@ -107,7 +107,6 @@
 		const xhr = e.detail.xhr
 		const encodedText = xhr.getResponseHeader("HX-Alert")
 		if (encodedText) {
-			console.log('encodedText', encodedText)
 			const bytes = Uint8Array.from(atob(encodedText), c => c.charCodeAt(0)) // TODO replace this with fromBase64 in the future
 			const decodedText = new TextDecoder().decode(bytes)
 			alert(decodedText)

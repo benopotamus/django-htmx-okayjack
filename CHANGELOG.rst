@@ -3,7 +3,7 @@
 Changelog
 #########
 
-4.0 (28 Nov 2025)
+4.0 (25 May 2026)
 =================
 
 Breaking changes
@@ -14,14 +14,14 @@ Breaking changes
 New
 ---
 
-* ``hx-partial`` support 🥳. Works the same as ``hx-block``. The intention is ``hx-partial`` eventually supercedes ``hx-block`` but, as partials are only in Django 6.0, we'll have two options for the forseeable future. And besides, who wants to rename a bunch of blocks to partial?
+* ``hx-partial`` support 🥳. Works the same as ``hx-block``. The intention is ``hx-partial`` eventually supercedes ``hx-block`` but, as partials are only in Django 6.0, we'll have two options for the forseeable future. And besides, who wants to rename a bunch of blocks to partial.
 * ``HxAlert`` and ``HxErrorAlert`` classes and ``hx-*-alert`` attributes. A HxAlert will display a JavaScript alert when the response has been processed. They all take a single argument which is the alert text.
+* A ``refresh`` variable is now automatically added to the request context (accessed in view or template as ``request.hx_refresh``). This is useful for conditional rendering. E.g. ``{% if request.hx_refresh }<script>...</script>{% endif %}``
 
-Improvements
-------------
+Bug fixes
+---------
 
-* swap style is automatically set to ``none`` if no ``block/partial`` has been included. This is useful when using things like ``hx-alert`` as you don't need to set ``hx-swap='none'``.
-
+* ``hx-refresh=true`` will actutually do a normal refresh now. It was errornously using the new body swap style before.
 
 3.0 (18 Nov 2025)
 =================

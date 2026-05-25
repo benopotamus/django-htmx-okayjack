@@ -116,6 +116,10 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 
 	e.g. ``hx-refresh="{% url 'a_different_view' arg1 etc %}"``
 
+	Sometimes it's useful for know whether the request is a refresh. A ``hx_refresh`` variable is automatically added to the request for this purpose. 
+
+	e.g. ``{% if request.hx_refresh }<script>...</script>{% endif %}``
+
 ``fire-after-*`` 
 	Use these attributes to specify events you want to fire when the response is returned. The event can be fired after receiving, swapping, or settling. The names are based on the response headers - see https://htmx.org/headers/hx-trigger/. 
 
