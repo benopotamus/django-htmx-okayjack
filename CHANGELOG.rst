@@ -3,6 +3,19 @@
 Changelog
 #########
 
+4.0.1 (25 May 2026)
+===================
+
+Doco
+----
+
+* Updated readme to include notes on ``HxAlert`` and ``hx-*-alert`` (oops!)
+
+Bug fixes
+---------
+
+* refresh now correctly handles querystring parameters
+
 4.0 (25 May 2026)
 =================
 

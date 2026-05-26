@@ -1,7 +1,8 @@
 import base64
+from urllib.parse import urlsplit
 from render_block import render_block_to_string
 from django.template.loader import render_to_string
-from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
+from django.http import HttpResponse, HttpResponseRedirect, HttpRequest, QueryDict
 from django.urls import resolve
 
 
@@ -29,7 +30,7 @@ hx_attributes = [
 
 class HxAlert(HttpResponse):
 	'''A HttpResponse that tells htmx to execute window.alert - and do nothing else.
-	The message is encoded so it can include new line characters and be passed using an http header.'''
+	alert_text is encoded so it can include new line characters and be passed using an http header.'''
 	def __init__(self, alert_text:str, *args, **kwargs):
 
 		# This class doesn't need the request object unlike the other classes.
@@ -85,7 +86,10 @@ class HxRefresh(HttpResponse):
 		# We do a response body swap if a path is provided
 		if path:
 			request.method = 'GET' # If the view handles multiple request methods, we want to use the GET (idempotent) one
-			resolver = resolve(path)
+			
+			url = urlsplit(path)
+			resolver = resolve(url.path) # resolve doesn't like querystrings
+			request.GET = QueryDict(url.query)
 			view_response = resolver.func(request, *resolver.args, **resolver.kwargs)
 
 			# Render if it's a lazy response (TemplateResponse, etc.)
@@ -207,7 +211,10 @@ class HxResponse(HttpResponse):
 					self['HX-Refresh'] = "true"
 				else:
 					request.method = 'GET' # If the view handles multiple request methods, we want to use the GET (idempotent) one
-					resolver = resolve(refresh)
+					
+					url = urlsplit(refresh)
+					resolver = resolve(url.path) # resolve doesn't like querystrings
+					request.GET = QueryDict(url.query)
 					view_response = resolver.func(request, *resolver.args, **resolver.kwargs)
 
 					# Render if it's a lazy response (TemplateResponse, etc.)

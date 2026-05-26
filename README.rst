@@ -24,7 +24,7 @@ The ``hx-success-*`` attributes are used when the response is ``HxSuccessRespons
 
 The extra attributes don't change htmx, all the regular htmx attributes work as normal and you can mix them as you wish. The extra attributes, combined with the Django Hx classes, just set htmx response headers which htmx processes as it normally would.
 
-Okayjack also adds support for using *parts* of a template (DTL ``{% block %}``) in a response, rather than creating separate template files for each response. 
+Okayjack (via ``django-render-block``) also supports using DTL blocks to select *parts* of a template for use in a response. This is similar to DTL partials in Django 6+. Using partials/blocks is the preferred approach as it keeps the number of template files to a minimum. 
 
 And it adds PUT and PATCH support to Django as well because they're nice to use 😁.
 
@@ -103,6 +103,8 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 -  fire-after-swap
 -  fire
 -  block
+-  do-nothing
+-  alert
 
 ``refresh``
 	This attribute supports two types of refresh.
@@ -116,7 +118,7 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 
 	e.g. ``hx-refresh="{% url 'a_different_view' arg1 etc %}"``
 
-	Sometimes it's useful for know whether the request is a refresh. A ``hx_refresh`` variable is automatically added to the request for this purpose. 
+	Sometimes it's useful to know whether the request is a refresh. A ``hx_refresh`` variable is automatically added to the request for this purpose. 
 
 	e.g. ``{% if request.hx_refresh }<script>...</script>{% endif %}``
 
@@ -139,6 +141,13 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 
 ``do-nothing``
 	Returns a HttpResponse with a 204 (No Content) status code.
+
+``alert``
+	Displays a JavaScript alert with the specified value. 
+	
+	E.g. ``hx-alert="Hello world!"`` is equivelant to executing ``alert("Hello world!")`` in JavaScript.
+
+	The alert is displayed ``afterSettle``.
 
 
 Django API
@@ -211,6 +220,10 @@ These are response classes for common htmx actions besides swapping new HTML int
 	``HxFire('close-dialog-box')``
 
 	The value can also be a JSON string, which allows for firing multiple events and/or passing data for the event. 
+
+``HxAlert(alert_text)``
+
+	A HttpResponse that tells htmx to execute ``window.alert(alert_text)`` - and do nothing else.
 
 ``BlockResponse(block)``
 
