@@ -3,6 +3,14 @@
 Changelog
 #########
 
+4.0.2 (28 May 2026)
+===================
+
+Bug fixes
+---------
+
+* ``hx-*-refresh`` now correctly handles ``"true"`` value. This does the same thing as setting ``HX-Refresh=true`` response header https://htmx.org/reference/#response_headers. 
+
 4.0.1 (25 May 2026)
 ===================
 

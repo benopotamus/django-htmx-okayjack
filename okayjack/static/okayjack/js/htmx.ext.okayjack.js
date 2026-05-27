@@ -35,7 +35,7 @@
 						let attrLower = attr.toLowerCase()
 
 						// If a Refresh attribute doesn't specify what path to use to generate the html, use the current path
-						if (attrLower.includes('refresh')  &&  ((value == '') || (value.toLowerCase() == 'true')) ) {
+						if (attrLower.includes('refresh')  &&  (value == '')) {
 							value = window.location.pathname + window.location.search
 
 						// base64 encode alert text so it can be sent in a http header
