@@ -103,6 +103,7 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 -  fire-after-swap
 -  fire
 -  block
+-  partial
 -  do-nothing
 -  alert
 
@@ -138,6 +139,15 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 	Blocks are regular Django template blocks.
 
 	``{% block welcome_block %}<p>I'm inside a block!</p>{% endblock }``
+
+``partial``
+	Works the same as **block**. Requires Django 6 or above.
+	
+	``hx-partial="base/home.html#welcome_partial"``
+
+	Patials are regular Django template partials.
+
+	``{% partialdef welcome_partial inline %}<p>I'm inside a block!</p>{% endpartialdef }``
 
 ``do-nothing``
 	Returns a HttpResponse with a 204 (No Content) status code.
