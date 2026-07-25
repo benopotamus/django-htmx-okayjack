@@ -1,7 +1,7 @@
 Django Okayjack (Django+htmx)
 #############################
 
-.. image:: docs/okay-jack-far-side
+.. image:: docs/okay-jack-far-side.png
    :width: 800px
    :align: center
 
@@ -26,7 +26,7 @@ Okayjack adds a few extra ``hx-*`` attributes which let you create conditional r
 
 The ``hx-success-*`` attributes are used when the response is ``HxSuccessResponse``, and ``hx-error-*`` attributes for ``HxErrorResponse``.
 
-Okayjack provides a superset of attributes. All the regular htmx attributes are left untouched and work as normal, and you can mix Okayjack and base htmx attributes as you wish. The extra attributes, combined with the Django Hx classes, just set `htmx response headers <https://htmx.org/reference/#response_headers>`_ which htmx then processes as it normally would.
+Okayjack provides a superset of htmx attributes. All the regular htmx attributes are left untouched and work as normal, and you can mix Okayjack and base htmx attributes as you wish. The extra attributes, combined with the Django Hx classes, just set `htmx response headers <https://htmx.org/reference/#response_headers>`_ which htmx then processes as it normally would.
 
 For Django 5.x projects, Okayjack (via ``django-render-block``) adds support for selecting *parts* (i.e. ``{% block ... %}``) of a template for use in a response. This is similar to DTL ``{% partialdef ... %}`` in Django 6. Using partials/blocks is very useful when using htmx as it keeps the number of template files to a minimum.
 
@@ -144,7 +144,7 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 
 	``{% block welcome_block %}<p>I'm inside a block!</p>{% endblock }``
 
-	This requires installing the optional ``django-render-block`` dependency.
+	Requires the optional ``django-render-block`` dependency.
 
 ``partial``
 	Works the same as **block**. Requires Django 6 or above.
