@@ -75,25 +75,21 @@
 		const doNothing = xhr.getResponseHeader("HX-Do-Nothing")
 		const reswap = xhr.getResponseHeader("HX-Reswap")
 
-		if (doNothing) {
-			e.detail.shouldSwap = false
-		}
-
 		if (xhr.status == 422) {
 			// Process 422 status code responses the same way as 200 responses...
 			e.detail.isError = false
-
-			// ...except if the user specifically chose a noswap option (e.g. HxAlert is a noswap option)
-			if (!doNothing || (reswap != 'none')) {
-				e.detail.shouldSwap = true
-			}
+			e.detail.shouldSwap = true	
 
 		} else if ((xhr.status >= 400) && (xhr.status < 500)) {
 			e.stopPropagation() // Tell htmx not to process these requests
 			document.children[0].innerHTML = xhr.response // Swap in body of response instead
 		}
 
-
+		// For any non-errors (e.g. 2xx responses), treat these as normal, except disable swapping if a "noswap" option was provided
+		// This intentionally overrides the 422 shouldSwap behaviour (i.e. 422's are processed like 200 responses, including when they should not be swapped because of a "noswap" value.)
+		if (doNothing || (reswap == 'none')) {
+			e.detail.shouldSwap = false	
+		}
 	})
 
 	/***

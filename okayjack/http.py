@@ -1,9 +1,16 @@
 import base64
 from urllib.parse import urlsplit
-from render_block import render_block_to_string
+
+# django-render-blocks is an optional depedency
+try:
+	from render_block import render_block_to_string
+except ImportError:
+	render_block_to_string = None
+
 from django.template.loader import render_to_string
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest, QueryDict
 from django.urls import resolve
+from django.core.exceptions import ImproperlyConfigured
 
 
 # The list of htmx attributes that HxResponse recognises, and their header equivalent (for telling htmx to do something different when it receives the response). kwarg is the kwarg name used when creating a HxResponse directly
@@ -34,9 +41,9 @@ class HxAlert(HttpResponse):
 	def __init__(self, alert_text:str, *args, **kwargs):
 
 		# This class doesn't need the request object unlike the other classes.
-		# This might trip people up so we just silently do what they were trying to do in the first place
+		# This might trip people up so we just silently do what they were trying to do in the first place. We make `alert_text` equal to `args[0]` and make a new list called `args` (to replace that variable name in this scope) of everything else that is in the original `args`. The `request` object gets lost/garbarge-collected
 		if isinstance(alert_text, HttpRequest):
-			alert_text = args[0]
+			alert_text, *args = args
 
 		super().__init__(*args, **kwargs)
 		self['HX-Alert'] = base64.b64encode(alert_text.encode("utf-8")).decode("ascii")
@@ -45,8 +52,6 @@ class HxAlert(HttpResponse):
 
 class HxErrorAlert(HxAlert):
 	'''422 variant of HxAlert'''
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
 	status_code = 422
 
 
@@ -145,7 +150,7 @@ class HxFire(HttpResponse):
 
 		if fire_after_swap:
 			self['HX-Trigger-After-Swap'] = fire_after_swap
-		if fire_after_swap:
+		if fire_after_settle:
 			self['HX-Trigger-After-Settle'] = fire_after_settle
 
 		self['HX-Reswap'] = 'none'
@@ -153,7 +158,7 @@ class HxFire(HttpResponse):
 
 class BlockResponse(HttpResponse):
 	'''Creates a TemplateResponse like object using django-render-block to render just a block in a template
-	The format of block is "template_name#block_name"
+	The format of `block` is "template_name#block_name"
 	'''
 	def __init__(self, request, block, context, **kwargs):
 		template_name, block_name = block.split('#')
@@ -256,7 +261,12 @@ class HxResponse(HttpResponse):
 			# Render HTML from context and partial/block reference (if supplied)
 			if partial:
 				content_string = render_to_string(template_name=partial, context=context, request=request)
+
 			elif block:
+				# Check user has installed the optional django-render-blocks dependency to use blocks as partials
+				if not render_block_to_string:
+					raise ImproperlyConfigured("Rendering DTL blocks as partials requires django-render-blocks. If this project uses Django 6+, you could use hx-*-partial instead of hx-*-block.")
+				
 				if '#' in block:
 					template_name, block_name = block.split('#')
 					content_string = render_block_to_string(template_name=template_name, block_name=block_name, context=context, request=request)
@@ -291,9 +301,9 @@ class HxResponse(HttpResponse):
 
 			# The following if statement is to support a programmer convenience / edge case
 			# If the request includes an alert, but no block/partial included, and no swap was specified, we assume the programmer intends to only display an alert after the response is processed. 
-			# This means they don't have to add a `hx-swap=none` to accompany a `hx-alert`.
+			# This means they don't have to add an `hx-swap=none` to accompany an `hx-alert`.
 			# It's expected this could be common usage for the error path. e.g. programmer is saying, "if there is an error, just display a browser alert and do nothing else"
-			if 'HX-Alert' in response_values and content_string == '' and 'HX-Swap' not in response_values:
+			if 'HX-Alert' in response_values and content_string == '' and 'HX-Reswap' not in response_values:
 				self['HX-Reswap'] = 'none'
 
 			# Set response headers
@@ -302,13 +312,19 @@ class HxResponse(HttpResponse):
 
 
 class HxSuccessResponse(HxResponse):
-	'''A convenience class for creating a 'sucess' HxResponse. This is just done by adding the state='success' kwarg.'''
+	'''A convenience class for creating a 'success' HxResponse.
+
+	`Equivalent to HxResponse(state='success', status=200)`.'''
 	def __init__(self, request, *args, **kwargs):
-		super().__init__(request, *args, state='success', status=200, **kwargs)
+		kwargs.setdefault('status', 200)
+		super().__init__(request, *args, state='success',**kwargs)
 
 class HxErrorResponse(HxResponse):
-	'''A convenience class for creating an 'error' HxResponse. This is just done by adding the state='error' kwarg.
+	'''A convenience class for creating an 'error' HxResponse. 
 	
-	422 (Unprocessable Content) is the error code we use for generic form submission errors'''
+	Equivalent to `HxResponse(state='error', status=422)`.
+
+	Note: "422 (Unprocessable Content)" is the error code we use for generic form submission errors'''
 	def __init__(self, request, *args, **kwargs):
-		super().__init__(request, *args, state='error', status=422, **kwargs)
+		kwargs.setdefault('status', 422)
+		super().__init__(request, *args, state='error', **kwargs)

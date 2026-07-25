@@ -34,6 +34,11 @@ class MiddlewareFullChainTestCase(TestCase):
 		self.assertEqual(response.status_code, 422)
 		self.assertEqual(response.headers.get('HX-Do-Nothing'), 'true')
 
+	def test_error_do_nothing_has_empty_body(self):
+		response = test_requests.post_error(self, {'HX-Error-Do-Nothing': ''})
+		self.assertEqual(response.headers.get('HX-Do-Nothing'), 'true')
+		self.assertEqual(response.content, b'')
+
 
 	### Fire-After-Receive
 

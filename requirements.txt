@@ -1,5 +1,5 @@
 django
-django-render-block
+django-render-block # optional dependency
 
 # These packages are used for tests.py
 #django-rainbowtests

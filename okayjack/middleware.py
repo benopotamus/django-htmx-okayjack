@@ -1,3 +1,4 @@
+# Copied from htmx.ext.okayjack.js. These two lists/arrays should match
 headerAttrs = [
 	'Block',
 	'Partial',
@@ -14,6 +15,7 @@ headerAttrs = [
 
 # These last 4 will never have general request headers (e.g. HX-Swap) because they're processed client side by htmx
 # These should not be added to general otherwise it will confuse things (e.g. HX-Target doesn't have the '#' for the id)	
+# Copied from htmx.ext.okayjack.js. These two lists/arrays should match
 clientProcessedAttrs =[
 	'Replace-Url',
 	'Swap',

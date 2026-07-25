@@ -1,7 +1,11 @@
 Django Okayjack (Django+htmx)
 #############################
 
-Okayjack adds a few extra ``hx-*`` attributes which let you create conditional response rules (i.e. for success (2xx) and error (4xx) responses) in the template instead of the View. This results in much simpler Views.
+.. image:: docs/okay-jack-far-side
+   :width: 800px
+   :align: center
+
+Okayjack adds a few extra ``hx-*`` attributes which let you create conditional response rules (i.e. for success (200) and error (422) responses) in your Templates instead of your Views. This results in much simpler Views.
 
 .. code-block:: html
 
@@ -22,11 +26,11 @@ Okayjack adds a few extra ``hx-*`` attributes which let you create conditional r
 
 The ``hx-success-*`` attributes are used when the response is ``HxSuccessResponse``, and ``hx-error-*`` attributes for ``HxErrorResponse``.
 
-The extra attributes don't change htmx, all the regular htmx attributes work as normal and you can mix them as you wish. The extra attributes, combined with the Django Hx classes, just set htmx response headers which htmx processes as it normally would.
+Okayjack provides a superset of attributes. All the regular htmx attributes are left untouched and work as normal, and you can mix Okayjack and base htmx attributes as you wish. The extra attributes, combined with the Django Hx classes, just set `htmx response headers <https://htmx.org/reference/#response_headers>`_ which htmx then processes as it normally would.
 
-Okayjack (via ``django-render-block``) also supports using DTL blocks to select *parts* of a template for use in a response. This is similar to DTL partials in Django 6+. Using partials/blocks is the preferred approach as it keeps the number of template files to a minimum. 
+For Django 5.x projects, Okayjack (via ``django-render-block``) adds support for selecting *parts* (i.e. ``{% block ... %}``) of a template for use in a response. This is similar to DTL ``{% partialdef ... %}`` in Django 6. Using partials/blocks is very useful when using htmx as it keeps the number of template files to a minimum.
 
-And it adds PUT and PATCH support to Django as well because they're nice to use 😁.
+And Okayjack adds PUT and PATCH support to Django as well because they're nice to use 😁.
 
 Table of contents
 =================
@@ -41,12 +45,12 @@ Table of contents
 Requirements
 ============
 
-`django-render-block <https://github.com/clokep/django-render-block/blob/main/README.rst>`_
+(optional) `django-render-block <https://github.com/clokep/django-render-block/blob/main/README.rst>`_
 
 Installation
 ============
 
-1. ``pip install django-htmx-okayjack``
+1. ``pip install django-htmx-okayjack`` if using Django 6, or ``pip install django-htmx-okayjack[blocks]`` if using Django 5.
 
 2. Add to ``settings.py``::
 
@@ -140,12 +144,14 @@ The ``*`` in ``hx-success-*`` and ``hx-error-*`` attributes can be any of the fo
 
 	``{% block welcome_block %}<p>I'm inside a block!</p>{% endblock }``
 
+	This requires installing the optional ``django-render-block`` dependency.
+
 ``partial``
 	Works the same as **block**. Requires Django 6 or above.
 	
 	``hx-partial="base/home.html#welcome_partial"``
 
-	Patials are regular Django template partials.
+	Patials are regular Django DTL partials.
 
 	``{% partialdef welcome_partial inline %}<p>I'm inside a block!</p>{% endpartialdef }``
 
@@ -170,22 +176,22 @@ Main classes
 
 	Creates a ‘success’ ``HxResponse``. The response will use ``hx-success-*`` and ``hx-*`` attributes specified in the template.
 	
-	``HxSuccessResponse(request[, context, block=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
+	``HxSuccessResponse(request[, context, block=None, partial=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 
 ``HxErrorResponse``
 
 	Creates an ‘error’ HxResponse. The response will use ``hx-error-*`` and ``hx-*`` attributes specified in the template.
 	
-	``HxErrorResponse(request[, context, block=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
+	``HxErrorResponse(request[, context, block=None, partial=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 
 
 ``HxResponse``
 
 	Creates a response that uses ``hx-*`` attributes in the template.
 	
-	At a minimum, it will automatically get the template/block for the response from either the ``block`` kwarg or the ``hx-block`` attribute used in the htmx request. 
+	At a minimum, it will automatically get the template/block/partial for the response from either the ``block`` / ``partial`` kwarg or the ``hx-block`` / ``hx-partial`` attribute used in the htmx request. 
 
-	``HxResponse(request[, context, block=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
+	``HxResponse(request[, context, block=None, partial=None, swap=None, target=None, fire-after-receive=None, fire_after_settle=None, fire_after_swap=None])``
 	
 	``HxResponse(request, { 'form': form })``
 
@@ -237,10 +243,10 @@ These are response classes for common htmx actions besides swapping new HTML int
 
 ``BlockResponse(block)``
 
-	Creates a ``TemplateResponse-like`` object using django-render-block to
-	render a block in a template. It's a light wrapper around django-render-block.
+	Creates a ``TemplateResponse-like`` object using ``django-render-block`` to
+	render a block in a template. It's a light wrapper around ``django-render-block``.
 	
-	The format of block is ``template_path/template_name#block_name``.
+	The format of ``block`` is ``template_path/template_name#block_name``.
 
 	``BlockResponse('base/home.html#welcome_block')``
 
@@ -289,7 +295,7 @@ The View will need a little update to reference the partial.
 			return render(request, "app/partials/contact_success.html", {'form': form})
 		return = render(request, "contact_error.html", {'form': form})
 
-This will work well for a successful form submission, but if there's an error, it will refresh the page. It would be nicer to swap out the form with one that displays the errors instead - no page refresh. We do this of course in the View using Response headers https://htmx.org/reference/#response_headers.
+This will work well for a successful form submission, but if there's an error, it will refresh the page. It would be nicer to swap out the form with one that displays the errors instead - no page refresh. That standard htmx way to do this of course is in the View using Response headers https://htmx.org/reference/#response_headers.
 
 .. code-block:: Python
 
