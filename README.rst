@@ -2,7 +2,7 @@ Django Okayjack (Django+htmx)
 #############################
 
 .. image:: docs/okay-jack-far-side.png
-   :width: 800px
+   :width: 500px
    :align: center
 
 Okayjack adds a few extra ``hx-*`` attributes which let you create conditional response rules (i.e. for success (200) and error (422) responses) in your Templates instead of your Views. This results in much simpler Views.
