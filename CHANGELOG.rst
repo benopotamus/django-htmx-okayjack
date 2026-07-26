@@ -3,11 +3,27 @@
 Changelog
 #########
 
+5.0.1  (25 Jul 2026)
+====================
+
+Breaking changes
+----------------
+
+* ``django-render-block`` optional dependency renamed to ``[block]`` (no "s") to match the package name. Install using ``pip install django-htmx-okayjack[block]``
+
+
 5.0 (25 Jul 2026)
 =================
 
+Breaking changes
+----------------
+
 * ``django-render-block`` now installs as an optional dependency
-* Little bug fixes
+
+Bug fixes
+---------
+
+* Various
 
 
 4.0.2 (28 May 2026)

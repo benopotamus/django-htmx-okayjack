@@ -50,7 +50,7 @@ Requirements
 Installation
 ============
 
-1. ``pip install django-htmx-okayjack`` if using Django 6, or ``pip install django-htmx-okayjack[blocks]`` if using Django 5.
+1. ``pip install django-htmx-okayjack`` if using Django 6, or ``pip install django-htmx-okayjack[block]`` if using Django 5.
 
 2. Add to ``settings.py``::
 
@@ -345,7 +345,7 @@ Because of the above, we can now simplify the view.
 
 The changes in the above example using Okayjack are:
 
-1. We reference ``{% blocks %}`` to get our partials rather than seperate files, which keeps the html in one place.
+1. We reference ``{% block %}`` to get our partials rather than seperate files, which keeps the html in one place.
 2. We specify different ``target`` and ``block`` attributes for use with successful/valid or error/invalid requests.
 3. We have the one ``hx-post`` attribute still. There's no need to specify it twice when it's the same for both.
 4. Valid forms return ``HxSuccessResponse``, invalid returns ``HxErrorResponse``. Our View no longer needs to do Retargets, etc, and it doesn't need to specify which partials/blocks to use, so it becomes simple enough that it can usually be ignored when reading templates.
